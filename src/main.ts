@@ -9,11 +9,12 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS
-  app.enableCors({
-    origin: process.env.CORS_ORIGIN || '*',
-    credentials: true,
-  });
+ const origins = (process.env.CORS_ORIGIN ?? '').split(',').map(s => s.trim()).filter(Boolean);
 
+app.enableCors({
+  origin: origins.length ? origins : false,
+  credentials: true,
+});
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
