@@ -17,21 +17,19 @@ import { Attendance } from './entities/attendance.entity';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        url: process.env.DATABASE_URL,
-        // host: configService.get('DB_HOST'),
-        // port: configService.get('DB_PORT'),
-        // username: configService.get('DB_USERNAME'),
-        // password: configService.get('DB_PASSWORD'),
-        // database: configService.get('DB_DATABASE'),
-        entities: [User, Session, Attendance],
-        synchronize: configService.get('NODE_ENV') === 'development',
-        logging: configService.get('NODE_ENV') === 'development',
-      }),
-      inject: [ConfigService],
-    }),
+  imports: [ConfigModule],
+  useFactory: (configService: ConfigService) => ({
+    type: 'postgres',
+    url: configService.get<string>('DATABASE_URL'), // usa ConfigService
+    ssl: configService.get('NODE_ENV') === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
+    entities: [User, Session, Attendance],
+    synchronize: configService.get('NODE_ENV') === 'development',
+    logging: configService.get('NODE_ENV') === 'development',
+  }),
+  inject: [ConfigService],
+}),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => [
