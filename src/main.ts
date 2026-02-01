@@ -24,6 +24,8 @@ async function bootstrap() {
   );
 
   const port = process.env.PORT || 3000;
+  console.log('JWT_SECRET set?', Boolean(process.env.JWT_SECRET));
+
   await app.listen(port);
 
   console.log(`🌸 Emaús Mujeres API running on port ${port}`);
