@@ -25,8 +25,8 @@ import { Attendance } from './entities/attendance.entity';
       ? { rejectUnauthorized: false }
       : false,
     entities: [User, Session, Attendance],
-    synchronize: configService.get('NODE_ENV') === 'production',
-    logging: configService.get('NODE_ENV') === 'production',
+    synchronize: true,
+    logging: configService.get('NODE_ENV') === 'development',
   }),
   inject: [ConfigService],
 }),
