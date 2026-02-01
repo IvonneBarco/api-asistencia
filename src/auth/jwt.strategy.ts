@@ -6,12 +6,25 @@ import { JwtPayload } from './interfaces/auth.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+
+  constructor(configService: ConfigService) {
+
+    const secret = configService.get<string>('JWT_SECRET') || process.env.JWT_SECRET;
+
+    if (!secret) {
+      throw new Error('JWT_SECRET is missing in environment variables');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: secret,
     });
+
+    // super({
+    //   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    //   ignoreExpiration: false,
+    //   secretOrKey: configService.get<string>('JWT_SECRET'),
+    // });
   }
 
   async validate(payload: JwtPayload) {
