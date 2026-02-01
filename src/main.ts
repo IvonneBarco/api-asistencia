@@ -9,12 +9,24 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS
- const origins = (process.env.CORS_ORIGIN ?? '').split(',').map(s => s.trim()).filter(Boolean);
+  const allowedOrigins = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
 
-app.enableCors({
-  origin: origins.length ? origins : false,
-  credentials: true,
-});
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Permite requests sin origin (Postman, curl, same-origin)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
