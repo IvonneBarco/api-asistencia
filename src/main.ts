@@ -16,17 +16,19 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      // Permite requests sin origin (Postman, curl, same-origin)
+      // Permite requests sin origin (curl, postman, server-to-server)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-
-      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+      const isAllowed = allowedOrigins.includes(origin);
+      return callback(null, isAllowed); // ✅ NO lanzar error
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
   });
+
+
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
