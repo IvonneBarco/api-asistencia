@@ -5,23 +5,23 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Global prefix
   app.setGlobalPrefix('api');
 
+  // CORS (Bearer token, sin cookies)
   const allowedOrigins = (process.env.CORS_ORIGIN ?? '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
   app.enableCors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      return callback(null, allowedOrigins.includes(origin));
-    },
-    credentials: false, // ✅ recomendado si usas Bearer tokens
+    origin: allowedOrigins, // 👈 IMPORTANTE: array explícito
+    credentials: false,     // 👈 correcto para Authorization: Bearer
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
+  // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
