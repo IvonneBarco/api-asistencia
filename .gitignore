@@ -1,0 +1,31 @@
+# Dependencies
+node_modules
+dist
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.production
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*.swn
+.DS_Store
+
+# Tests
+coverage
+.nyc_output
+
+# TypeORM
+ormconfig.json
+
+# Build
+build
+/.env
+/package-lock.json
