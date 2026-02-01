@@ -28,7 +28,7 @@ async function bootstrap() {
   console.log("JWT_SECRET exists:", Boolean(process.env.JWT_SECRET));
   console.log("NODE_ENV:", process.env.NODE_ENV);
 
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(`🌸 Emaús Mujeres API running on port ${port}`);
 }

@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { HealthController } from './health.controller';
 import { User } from './entities/user.entity';
 import { Session } from './entities/session.entity';
 import { Attendance } from './entities/attendance.entity';
@@ -19,11 +20,12 @@ import { Attendance } from './entities/attendance.entity';
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: configService.get('DB_PORT'),
-        username: configService.get('DB_USERNAME'),
-        password: configService.get('DB_PASSWORD'),
-        database: configService.get('DB_DATABASE'),
+        url: process.env.DATABASE_URL,
+        // host: configService.get('DB_HOST'),
+        // port: configService.get('DB_PORT'),
+        // username: configService.get('DB_USERNAME'),
+        // password: configService.get('DB_PASSWORD'),
+        // database: configService.get('DB_DATABASE'),
         entities: [User, Session, Attendance],
         synchronize: configService.get('NODE_ENV') === 'development',
         logging: configService.get('NODE_ENV') === 'development',
@@ -45,5 +47,6 @@ import { Attendance } from './entities/attendance.entity';
     AttendanceModule,
     LeaderboardModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
