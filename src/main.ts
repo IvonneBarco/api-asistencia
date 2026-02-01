@@ -14,19 +14,24 @@ async function bootstrap() {
     .map(s => s.trim())
     .filter(Boolean);
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      // Permite requests sin origin (curl, postman, server-to-server)
-      if (!origin) return callback(null, true);
+  app.use((req, res, next) => {
+    if (req.method === 'OPTIONS') {
+      const origin = req.headers.origin as string | undefined;
 
-      const isAllowed = allowedOrigins.includes(origin);
-      return callback(null, isAllowed); // ✅ NO lanzar error
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    optionsSuccessStatus: 204,
+      if (origin && allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+        res.header('Vary', 'Origin');
+        res.header('Access-Control-Allow-Credentials', 'true');
+      }
+
+      res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+      return res.sendStatus(204);
+    }
+    next();
   });
+
 
 
   // Global validation pipe
