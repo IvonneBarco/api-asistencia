@@ -74,7 +74,7 @@ export class AdminController {
 
   @Post('users/csv')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadUsersCSV(@UploadedFile() file: Express.Multer.File) {
+  async uploadUsersCSV(@UploadedFile() file: any) {
     if (!file) {
       throw new BadRequestException('No se proporcionó ningún archivo');
     }

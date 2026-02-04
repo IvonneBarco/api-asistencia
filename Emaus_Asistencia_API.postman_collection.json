@@ -361,7 +361,7 @@
 								}
 							]
 						},
-						"method": "PATCH",
+						"method": "PUT",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/admin/sessions/{{session_id}}/deactivate",
@@ -380,7 +380,7 @@
 					"response": []
 				},
 				{
-					"name": "Sync Users (Not Implemented)",
+					"name": "Sync Users Info",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -413,7 +413,86 @@
 								"sync-users"
 							]
 						},
-						"description": "Sincronizar usuarios desde Google Sheets. (Pendiente de implementación)"
+						"description": "Retorna información sobre cómo sincronizar usuarios. Para sincronización real usar /admin/users/bulk o /admin/users/csv"
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Sync Users (JSON)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"users\": [\n    {\n      \"name\": \"María García\",\n      \"email\": \"maria@emaus.com\",\n      \"pin\": \"1234\",\n      \"role\": \"user\"\n    },\n    {\n      \"name\": \"Isabel Rodríguez\",\n      \"email\": \"isabel@emaus.com\",\n      \"pin\": \"5678\",\n      \"role\": \"user\"\n    },\n    {\n      \"name\": \"Admin Emaús\",\n      \"email\": \"admin@emaus.com\",\n      \"pin\": \"9999\",\n      \"role\": \"admin\"\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/bulk",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"bulk"
+							]
+						},
+						"description": "Crear o actualizar usuarios masivamente desde JSON. Acepta uno o múltiples usuarios."
+					},
+					"response": []
+				},
+				{
+					"name": "Import Users from CSV",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/csv",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								"csv"
+							]
+						},
+						"description": "Importar usuarios desde archivo CSV. Formato: name,email,pin,role"
 					},
 					"response": []
 				}
