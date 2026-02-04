@@ -118,16 +118,175 @@ export class AdminService {
   }
 
   /**
-   * Sincroniza usuarios desde Google Sheets
-   * Por ahora, implementación mock
+   * Sincroniza usuarios desde Google Sheets o lista JSON
+   * Crea nuevos usuarios o actualiza existentes
    */
   async syncUsersFromSheet(spreadsheetId?: string) {
-    // TODO: Implementar integración con Google Sheets API
-    // Por ahora, retorna mensaje de pendiente
+    // TODO: Implementar integración real con Google Sheets API
+    // Por ahora, retorna instrucciones
 
-    throw new BadRequestException(
-      'La sincronización con Google Sheets aún no está implementada',
-    );
+    return {
+      message: 'Para sincronizar usuarios, use el endpoint POST /admin/users/bulk con un array de usuarios',
+      example: {
+        users: [
+          {
+            name: 'María García',
+            email: 'maria@emaus.com',
+            pin: '1234',
+            role: 'user'
+          }
+        ]
+      },
+      note: 'La integración directa con Google Sheets requiere configurar credenciales OAuth2 o Service Account'
+    };
+  }
+
+  /**
+   * Sincronización masiva de usuarios desde array JSON
+   * Crea o actualiza usuarios en batch
+   */
+  async bulkSyncUsers(users: Array<{
+    name: string;
+    email: string;
+    pin: string;
+    role?: string;
+  }>) {
+    const results = {
+      created: [],
+      updated: [],
+      errors: [],
+      total: users.length,
+    };
+
+    for (const userData of users) {
+      try {
+        // Buscar usuario existente
+        const existingUser = await this.userRepository.findOne({
+          where: { email: userData.email },
+        });
+
+        if (existingUser) {
+          // Actualizar usuario existente
+          existingUser.name = userData.name;
+          
+          // Solo actualizar PIN si se proporciona uno nuevo
+          if (userData.pin && userData.pin !== '****') {
+            existingUser.pinHash = await this.authService.hashPin(userData.pin);
+          }
+          
+          if (userData.role && (userData.role === 'user' || userData.role === 'admin')) {
+            existingUser.role = userData.role as UserRole;
+          }
+
+          await this.userRepository.save(existingUser);
+          
+          results.updated.push({
+            email: userData.email,
+            name: userData.name,
+          });
+        } else {
+          // Crear nuevo usuario
+          const pinHash = await this.authService.hashPin(userData.pin);
+          
+          const newUser = this.userRepository.create({
+            name: userData.name,
+            email: userData.email,
+            pinHash,
+            role: (userData.role === 'admin' ? UserRole.ADMIN : UserRole.USER),
+            flowers: 0,
+          });
+
+          await this.userRepository.save(newUser);
+          
+          results.created.push({
+            email: userData.email,
+            name: userData.name,
+          });
+        }
+      } catch (error) {
+        results.errors.push({
+          email: userData.email,
+          error: error.message,
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Importa usuarios desde contenido CSV
+   * Formato esperado: name,email,pin,role
+   */
+  async importUsersFromCSV(csvContent: string) {
+    const lines = csvContent.split('\n').filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      throw new BadRequestException('El archivo CSV está vacío');
+    }
+
+    // Detectar si tiene encabezado
+    const firstLine = lines[0].toLowerCase();
+    const hasHeader = firstLine.includes('name') || firstLine.includes('email');
+    
+    const dataLines = hasHeader ? lines.slice(1) : lines;
+    const users = [];
+
+    for (const line of dataLines) {
+      if (!line.trim()) continue;
+
+      // Parsear CSV respetando comillas
+      const values = this.parseCSVLine(line);
+      
+      if (values.length < 3) {
+        continue; // Saltar líneas inválidas
+      }
+
+      users.push({
+        name: values[0]?.trim() || '',
+        email: values[1]?.trim() || '',
+        pin: values[2]?.trim() || '',
+        role: values[3]?.trim() || 'user',
+      });
+    }
+
+    if (users.length === 0) {
+      throw new BadRequestException('No se encontraron usuarios válidos en el CSV');
+    }
+
+    // Usar el método existente de sincronización masiva
+    return this.bulkSyncUsers(users);
+  }
+
+  /**
+   * Parsea una línea CSV respetando comillas y comas dentro de campos
+   */
+  private parseCSVLine(line: string): string[] {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      const nextChar = line[i + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          i++; // Saltar la siguiente comilla
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current);
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current);
+    return result;
   }
 
   /**

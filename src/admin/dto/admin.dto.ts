@@ -22,3 +22,26 @@ export class SyncUsersDto {
   @IsOptional()
   spreadsheetId?: string;
 }
+
+export class UserDataDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @IsNotEmpty()
+  pin: string;
+
+  @IsString()
+  @IsOptional()
+  role?: string;
+}
+
+export class BulkSyncUsersDto {
+  @IsNotEmpty({ message: 'La lista de usuarios es requerida' })
+  users: UserDataDto[];
+}

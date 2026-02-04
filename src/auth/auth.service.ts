@@ -53,6 +53,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         flowers: user.flowers,
+        role: user.role,
       },
     };
   }

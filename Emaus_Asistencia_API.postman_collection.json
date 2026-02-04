@@ -1,0 +1,465 @@
+{
+	"info": {
+		"_postman_id": "emaus-asistencia-api-collection",
+		"name": "Emaús Asistencia API",
+		"description": "API para sistema de asistencia con gamificación de flores - Emaús Mujeres",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "emaus-mujeres"
+	},
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"health"
+							]
+						},
+						"description": "Verificar que el servidor está en línea"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.token) {",
+									"        pm.environment.set(\"auth_token\", jsonData.data.token);",
+									"        console.log(\"Token guardado: \" + jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"maria@emaus.com\",\n  \"pin\": \"1234\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login con email y PIN de 4 dígitos. Retorna JWT token."
+					},
+					"response": []
+				},
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.token) {",
+									"        pm.environment.set(\"admin_token\", jsonData.data.token);",
+									"        console.log(\"Admin token guardado: \" + jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@emaus.com\",\n  \"pin\": \"1234\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login como administrador"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User (Me)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Obtener datos del usuario actual autenticado"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Attendance",
+			"item": [
+				{
+					"name": "Scan QR Code",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"qrCode\": \"{\\\"sid\\\":\\\"SESSION-2026-02-03-ABC123\\\",\\\"exp\\\":1738944000,\\\"sig\\\":\\\"a8f3e2d...\\\"}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/attendance/scan",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"attendance",
+								"scan"
+							]
+						},
+						"description": "Escanear código QR de sesión y registrar asistencia. Otorga +1 flor si es válido y no duplicado."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Leaderboard",
+			"item": [
+				{
+					"name": "Get Leaderboard",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/leaderboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"leaderboard"
+							]
+						},
+						"description": "Obtener el ranking de flores (Jardín de Emaús) de todas las usuarias"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Create Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.sessionId) {",
+									"        pm.environment.set(\"session_id\", jsonData.data.sessionId);",
+									"        console.log(\"Session ID guardado: \" + jsonData.data.sessionId);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Encuentro Semanal - Febrero\",\n  \"startsAt\": \"2026-02-05T19:00:00.000Z\",\n  \"endsAt\": \"2026-02-05T21:00:00.000Z\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/sessions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"sessions"
+							]
+						},
+						"description": "Crear nueva sesión con QR code. Solo para administradores."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Sessions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/sessions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"sessions"
+							]
+						},
+						"description": "Listar todas las sesiones creadas. Solo para administradores."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Session QR",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/sessions/{{session_id}}/qr",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"sessions",
+								"{{session_id}}",
+								"qr"
+							]
+						},
+						"description": "Obtener el código QR de una sesión específica. Solo para administradores."
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Session",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/sessions/{{session_id}}/deactivate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"sessions",
+								"{{session_id}}",
+								"deactivate"
+							]
+						},
+						"description": "Desactivar una sesión para que no acepte más escaneos. Solo para administradores."
+					},
+					"response": []
+				},
+				{
+					"name": "Sync Users (Not Implemented)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"spreadsheetId\": \"optional-google-sheet-id\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/sync-users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"sync-users"
+							]
+						},
+						"description": "Sincronizar usuarios desde Google Sheets. (Pendiente de implementación)"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "session_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
