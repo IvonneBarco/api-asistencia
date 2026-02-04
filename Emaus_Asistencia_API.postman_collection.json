@@ -642,6 +642,151 @@
 					"response": []
 				},
 				{
+					"name": "Create Group (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Grupo 4\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/groups",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups"
+							]
+						},
+						"description": "ADMIN ONLY: Crea un nuevo grupo de trabajo"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Groups (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/groups/all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups",
+								"all"
+							]
+						},
+						"description": "ADMIN ONLY: Obtiene todos los grupos incluyendo inactivos"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Group (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Grupo 4 - Actualizado\",\n  \"isActive\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/groups/:groupId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups",
+								":groupId"
+							],
+							"variable": [
+								{
+									"key": "groupId",
+									"value": "{{group_id}}"
+								}
+							]
+						},
+						"description": "ADMIN ONLY: Actualiza nombre o estado activo de un grupo"
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate Group (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/groups/:groupId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups",
+								":groupId"
+							],
+							"variable": [
+								{
+									"key": "groupId",
+									"value": "{{group_id}}"
+								}
+							]
+						},
+						"description": "ADMIN ONLY: Desactiva un grupo (no lo elimina físicamente)"
+					},
+					"response": []
+				},
+				{
 					"name": "Assign Group (Admin)",
 					"request": {
 						"auth": {

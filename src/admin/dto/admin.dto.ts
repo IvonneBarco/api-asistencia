@@ -59,3 +59,9 @@ export class AssignGroupDto {
   @IsOptional()
   reason?: string;
 }
+
+export class RemoveFromGroupDto {
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}

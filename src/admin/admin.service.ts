@@ -143,6 +143,33 @@ export class AdminService {
   }
 
   /**
+   * Obtiene todos los usuarios registrados con sus grupos
+   */
+  async getAllUsers() {
+    const users = await this.userRepository.find({
+      relations: ['group'],
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    return users.map((user) => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      identification: user.identification,
+      flowers: user.flowers,
+      role: user.role,
+      createdAt: user.createdAt,
+      group: user.group ? {
+        id: user.group.id,
+        name: user.group.name,
+        isActive: user.group.isActive,
+      } : null,
+    }));
+  }
+
+  /**
    * Sincronización masiva de usuarios desde array JSON
    * Crea o actualiza usuarios en batch
    */

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 
 export class JoinGroupDto {
   @IsString()
@@ -14,4 +14,24 @@ export class AssignGroupDto {
   @IsString()
   @IsOptional()
   reason?: string;
+}
+
+export class CreateGroupDto {
+  @IsString()
+  @IsNotEmpty({ message: 'El nombre del grupo es requerido' })
+  name: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+}
+
+export class UpdateGroupDto {
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }

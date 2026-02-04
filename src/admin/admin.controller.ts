@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminService } from './admin.service';
-import { CreateSessionDto, SyncUsersDto, AssignGroupDto } from './dto/admin.dto';
+import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -66,6 +66,15 @@ export class AdminController {
     const data = await this.adminService.syncUsersFromSheet(dto.spreadsheetId);
     return {
       data,
+    };
+  }
+
+  @Get('users')
+  async getAllUsers() {
+    const data = await this.adminService.getAllUsers();
+    return {
+      data,
+      total: data.length,
     };
   }
 
@@ -121,6 +130,30 @@ export class AdminController {
       success: true,
       data,
       message: 'Grupo asignado exitosamente',
+    };
+  }
+
+  /**
+   * DELETE /api/admin/users/:userId/group
+   * Permite a un ADMIN quitar a un usuario de su grupo
+   */
+  @Patch('users/:userId/remove-group')
+  async removeUserFromGroup(
+    @Param('userId') userId: string,
+    @Body() dto: RemoveFromGroupDto,
+    @Request() req,
+  ) {
+    const adminUserId = req.user.userId;
+    const data = await this.groupsService.removeUserFromGroup(
+      userId,
+      adminUserId,
+      dto.reason,
+    );
+    
+    return {
+      success: true,
+      data,
+      message: 'Usuario removido del grupo exitosamente',
     };
   }
 
