@@ -3,26 +3,32 @@ import {
   Post,
   Get,
   Put,
+  Patch,
   Body,
   Param,
   UseGuards,
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminService } from './admin.service';
-import { CreateSessionDto, SyncUsersDto } from './dto/admin.dto';
+import { CreateSessionDto, SyncUsersDto, AssignGroupDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../entities/user.entity';
+import { GroupsService } from '../groups/groups.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminController {
-  constructor(private adminService: AdminService) {}
+  constructor(
+    private adminService: AdminService,
+    private groupsService: GroupsService,
+  ) {}
 
   @Post('sessions')
   async createSession(@Body() dto: CreateSessionDto) {
@@ -89,6 +95,46 @@ export class AdminController {
     return {
       data,
       message: `Importación completada: ${data.created.length} creados, ${data.updated.length} actualizados, ${data.errors.length} errores`,
+    };
+  }
+
+  /**
+   * PATCH /api/admin/users/:userId/group
+   * Permite a un ADMIN cambiar el grupo de un usuario
+   * Puede reasignar aunque el usuario ya tenga grupo
+   */
+  @Patch('users/:userId/group')
+  async assignUserGroup(
+    @Param('userId') userId: string,
+    @Body() dto: AssignGroupDto,
+    @Request() req,
+  ) {
+    const adminUserId = req.user.userId;
+    const data = await this.groupsService.assignGroupByAdmin(
+      userId,
+      dto.groupId,
+      adminUserId,
+      dto.reason,
+    );
+    
+    return {
+      success: true,
+      data,
+      message: 'Grupo asignado exitosamente',
+    };
+  }
+
+  /**
+   * GET /api/admin/users/:userId/group-history
+   * Obtiene el historial de cambios de grupo de un usuario
+   */
+  @Get('users/:userId/group-history')
+  async getUserGroupHistory(@Param('userId') userId: string) {
+    const data = await this.groupsService.getUserGroupHistory(userId);
+    
+    return {
+      success: true,
+      data,
     };
   }
 }

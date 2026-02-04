@@ -542,6 +542,189 @@
 					"response": []
 				}
 			]
+		},
+		{
+			"name": "Groups",
+			"item": [
+				{
+					"name": "Get All Groups",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/groups",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups"
+							]
+						},
+						"description": "Obtiene lista de grupos activos con número de miembros"
+					},
+					"response": []
+				},
+				{
+					"name": "Join Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"groupId\": \"{{group_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/groups/join",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups",
+								"join"
+							]
+						},
+						"description": "Permite a un usuario unirse a un grupo. SOLO puede hacerlo UNA VEZ. Si ya tiene grupo retorna 409 Conflict."
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Group",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/groups/my-group",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"groups",
+								"my-group"
+							]
+						},
+						"description": "Obtiene el grupo actual del usuario autenticado"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Group (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"groupId\": \"{{group_id}}\",\n  \"reason\": \"Reasignación por solicitud del usuario\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/users/:userId/group",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								":userId",
+								"group"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						},
+						"description": "ADMIN ONLY: Permite cambiar el grupo de un usuario, incluso si ya tiene uno asignado"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User Group History (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/users/:userId/group-history",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users",
+								":userId",
+								"group-history"
+							],
+							"variable": [
+								{
+									"key": "userId",
+									"value": "{{user_id}}"
+								}
+							]
+						},
+						"description": "ADMIN ONLY: Obtiene historial completo de cambios de grupo de un usuario"
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"event": [
@@ -582,6 +765,16 @@
 		},
 		{
 			"key": "session_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "group_id",
 			"value": "",
 			"type": "string"
 		}

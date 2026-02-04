@@ -6,10 +6,13 @@ import { AuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
+import { GroupsModule } from './groups/groups.module';
 import { HealthController } from './health.controller';
 import { User } from './entities/user.entity';
 import { Session } from './entities/session.entity';
 import { Attendance } from './entities/attendance.entity';
+import { Group } from './entities/group.entity';
+import { GroupAssignmentAudit } from './entities/group-assignment-audit.entity';
 
 @Module({
   imports: [
@@ -24,7 +27,7 @@ import { Attendance } from './entities/attendance.entity';
     ssl: configService.get('NODE_ENV') === 'production'
       ? { rejectUnauthorized: false }
       : false,
-    entities: [User, Session, Attendance],
+    entities: [User, Session, Attendance, Group, GroupAssignmentAudit],
     synchronize: configService.get('NODE_ENV') === 'development',
     logging: configService.get('NODE_ENV') === 'development',
   }),
@@ -44,6 +47,7 @@ import { Attendance } from './entities/attendance.entity';
     AdminModule,
     AttendanceModule,
     LeaderboardModule,
+    GroupsModule,
   ],
   controllers: [HealthController],
 })

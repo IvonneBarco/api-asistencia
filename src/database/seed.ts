@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import { User, UserRole } from '../entities/user.entity';
 import { Session } from '../entities/session.entity';
 import { Attendance } from '../entities/attendance.entity';
+import { Group } from '../entities/group.entity';
 
 config();
 
@@ -14,7 +15,7 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [User, Session, Attendance],
+  entities: [User, Session, Attendance, Group],
   synchronize: false,
 });
 
@@ -25,6 +26,30 @@ async function seed() {
 
     const userRepository = AppDataSource.getRepository(User);
     const sessionRepository = AppDataSource.getRepository(Session);
+    const groupRepository = AppDataSource.getRepository(Group);
+
+    // Crear grupos predeterminados
+    const groupNames = ['Grupo 1', 'Grupo 2', 'Grupo 3'];
+    const groups = [];
+
+    for (const groupName of groupNames) {
+      const existing = await groupRepository.findOne({
+        where: { name: groupName },
+      });
+
+      if (!existing) {
+        const group = groupRepository.create({
+          name: groupName,
+          isActive: true,
+        });
+        await groupRepository.save(group);
+        groups.push(group);
+        console.log(`✅ Grupo creado: ${groupName}`);
+      } else {
+        groups.push(existing);
+        console.log(`⏭️  Grupo ya existe: ${groupName}`);
+      }
+    }
 
     // Crear usuarios de prueba
     const pinHash = await bcrypt.hash('1234', 10);

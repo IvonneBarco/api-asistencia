@@ -6,9 +6,10 @@ import { AdminService } from './admin.service';
 import { AdminController } from './admin.controller';
 import { QrService } from '../services/qr.service';
 import { AuthModule } from '../auth/auth.module';
+import { GroupsModule } from '../groups/groups.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session, User]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Session, User]), AuthModule, GroupsModule],
   controllers: [AdminController],
   providers: [AdminService, QrService],
 })

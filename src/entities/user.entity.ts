@@ -5,8 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Attendance } from './attendance.entity';
+import { Group } from './group.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -32,6 +35,13 @@ export class User {
 
   @Column({ type: 'int', default: 0 })
   flowers: number;
+
+  @Column({ name: 'group_id', nullable: true })
+  groupId: string;
+
+  @ManyToOne(() => Group, (group) => group.users, { nullable: true })
+  @JoinColumn({ name: 'group_id' })
+  group: Group;
 
   @Column({
     type: 'enum',

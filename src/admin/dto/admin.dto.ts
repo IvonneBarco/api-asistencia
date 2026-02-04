@@ -49,3 +49,13 @@ export class BulkSyncUsersDto {
   @IsNotEmpty({ message: 'La lista de usuarios es requerida' })
   users: UserDataDto[];
 }
+
+export class AssignGroupDto {
+  @IsString()
+  @IsNotEmpty({ message: 'El ID del grupo es requerido' })
+  groupId: string;
+
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
