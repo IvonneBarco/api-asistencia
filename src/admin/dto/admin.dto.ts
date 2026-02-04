@@ -30,11 +30,15 @@ export class UserDataDto {
 
   @IsString()
   @IsNotEmpty()
-  email: string;
+  identification: string;
 
   @IsString()
-  @IsNotEmpty()
-  pin: string;
+  @IsOptional()
+  email?: string;
+
+  @IsString()
+  @IsOptional()
+  pin?: string;
 
   @IsString()
   @IsOptional()

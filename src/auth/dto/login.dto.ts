@@ -1,4 +1,4 @@
-import { IsEmail, IsString, Length } from 'class-validator';
+import { IsEmail, IsString, Length, IsNotEmpty } from 'class-validator';
 
 export class LoginDto {
   @IsEmail({}, { message: 'Correo electrónico inválido' })
@@ -7,4 +7,10 @@ export class LoginDto {
   @IsString()
   @Length(4, 4, { message: 'El PIN debe tener 4 dígitos' })
   pin: string;
+}
+
+export class LoginIdentificationDto {
+  @IsString()
+  @IsNotEmpty({ message: 'El número de identificación es requerido' })
+  identification: string;
 }

@@ -22,6 +22,11 @@ export class AuthService {
       return null;
     }
 
+    // Verificar que el usuario tenga PIN configurado
+    if (!user.pinHash) {
+      return null;
+    }
+
     const isPinValid = await bcrypt.compare(pin, user.pinHash);
 
     if (!isPinValid) {
@@ -36,6 +41,35 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = this.jwtService.sign(payload);
+
+    return {
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        flowers: user.flowers,
+        role: user.role,
+      },
+    };
+  }
+
+  async loginWithIdentification(identification: string): Promise<AuthResponse> {
+    const user = await this.userRepository.findOne({
+      where: { identification },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Número de identificación no encontrado');
     }
 
     const payload: JwtPayload = {

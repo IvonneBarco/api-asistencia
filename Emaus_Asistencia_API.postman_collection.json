@@ -124,6 +124,51 @@
 					"response": []
 				},
 				{
+					"name": "Login with Identification",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.token) {",
+									"        pm.environment.set(\"auth_token\", jsonData.data.token);",
+									"        console.log(\"Token guardado: \" + jsonData.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"identification\": \"12345678\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login-identification",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login-identification"
+							]
+						},
+						"description": "Login alternativo solo con número de identificación. Retorna JWT token."
+					},
+					"response": []
+				},
+				{
 					"name": "Get Current User (Me)",
 					"request": {
 						"auth": {
@@ -439,7 +484,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"users\": [\n    {\n      \"name\": \"María García\",\n      \"email\": \"maria@emaus.com\",\n      \"pin\": \"1234\",\n      \"role\": \"user\"\n    },\n    {\n      \"name\": \"Isabel Rodríguez\",\n      \"email\": \"isabel@emaus.com\",\n      \"pin\": \"5678\",\n      \"role\": \"user\"\n    },\n    {\n      \"name\": \"Admin Emaús\",\n      \"email\": \"admin@emaus.com\",\n      \"pin\": \"9999\",\n      \"role\": \"admin\"\n    }\n  ]\n}"
+							"raw": "{\n  \"users\": [\n    {\n      \"name\": \"María García\",\n      \"identification\": \"12345678\",\n      \"email\": \"maria@emaus.com\",\n      \"pin\": \"1234\",\n      \"role\": \"user\"\n    },\n    {\n      \"name\": \"Isabel Rodríguez\",\n      \"identification\": \"34567890\",\n      \"email\": \"isabel@emaus.com\",\n      \"pin\": \"5678\",\n      \"role\": \"user\"\n    },\n    {\n      \"name\": \"Admin Emaús\",\n      \"identification\": \"99999999\",\n      \"email\": \"admin@emaus.com\",\n      \"pin\": \"9999\",\n      \"role\": \"admin\"\n    }\n  ]\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/users/bulk",
@@ -492,7 +537,7 @@
 								"csv"
 							]
 						},
-						"description": "Importar usuarios desde archivo CSV. Formato: name,email,pin,role"
+						"description": "Importar usuarios desde archivo CSV. Formato: name,identification,email,pin,role (email y pin opcionales)"
 					},
 					"response": []
 				}

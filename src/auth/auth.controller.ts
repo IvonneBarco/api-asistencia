@@ -9,7 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, LoginIdentificationDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
@@ -20,6 +20,15 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     const response = await this.authService.login(loginDto);
+    return {
+      data: response,
+    };
+  }
+
+  @Post('login-identification')
+  @HttpCode(HttpStatus.OK)
+  async loginWithIdentification(@Body() loginDto: LoginIdentificationDto) {
+    const response = await this.authService.loginWithIdentification(loginDto.identification);
     return {
       data: response,
     };

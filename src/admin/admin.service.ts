@@ -131,6 +131,7 @@ export class AdminService {
         users: [
           {
             name: 'María García',
+            identification: '12345678',
             email: 'maria@emaus.com',
             pin: '1234',
             role: 'user'
@@ -147,8 +148,9 @@ export class AdminService {
    */
   async bulkSyncUsers(users: Array<{
     name: string;
-    email: string;
-    pin: string;
+    identification: string;
+    email?: string;
+    pin?: string;
     role?: string;
   }>) {
     const results = {
@@ -160,14 +162,19 @@ export class AdminService {
 
     for (const userData of users) {
       try {
-        // Buscar usuario existente
+        // Buscar usuario existente por identification
         const existingUser = await this.userRepository.findOne({
-          where: { email: userData.email },
+          where: { identification: userData.identification },
         });
 
         if (existingUser) {
           // Actualizar usuario existente
           existingUser.name = userData.name;
+          
+          // Actualizar email si se proporciona
+          if (userData.email) {
+            existingUser.email = userData.email;
+          }
           
           // Solo actualizar PIN si se proporciona uno nuevo
           if (userData.pin && userData.pin !== '****') {
@@ -181,16 +188,17 @@ export class AdminService {
           await this.userRepository.save(existingUser);
           
           results.updated.push({
-            email: userData.email,
+            identification: userData.identification,
             name: userData.name,
           });
         } else {
           // Crear nuevo usuario
-          const pinHash = await this.authService.hashPin(userData.pin);
+          const pinHash = userData.pin ? await this.authService.hashPin(userData.pin) : null;
           
           const newUser = this.userRepository.create({
             name: userData.name,
-            email: userData.email,
+            identification: userData.identification,
+            email: userData.email || null,
             pinHash,
             role: (userData.role === 'admin' ? UserRole.ADMIN : UserRole.USER),
             flowers: 0,
@@ -199,13 +207,13 @@ export class AdminService {
           await this.userRepository.save(newUser);
           
           results.created.push({
-            email: userData.email,
+            identification: userData.identification,
             name: userData.name,
           });
         }
       } catch (error) {
         results.errors.push({
-          email: userData.email,
+          identification: userData.identification,
           error: error.message,
         });
       }
@@ -216,7 +224,8 @@ export class AdminService {
 
   /**
    * Importa usuarios desde contenido CSV
-   * Formato esperado: name,email,pin,role
+   * Formato esperado: name,identification,email,pin,role
+   * Email y PIN son opcionales
    */
   async importUsersFromCSV(csvContent: string) {
     const lines = csvContent.split('\n').filter(line => line.trim());
@@ -227,7 +236,7 @@ export class AdminService {
 
     // Detectar si tiene encabezado
     const firstLine = lines[0].toLowerCase();
-    const hasHeader = firstLine.includes('name') || firstLine.includes('email');
+    const hasHeader = firstLine.includes('name') || firstLine.includes('identification');
     
     const dataLines = hasHeader ? lines.slice(1) : lines;
     const users = [];
@@ -238,15 +247,16 @@ export class AdminService {
       // Parsear CSV respetando comillas
       const values = this.parseCSVLine(line);
       
-      if (values.length < 3) {
-        continue; // Saltar líneas inválidas
+      if (values.length < 2) {
+        continue; // Saltar líneas inválidas (mínimo name + identification)
       }
 
       users.push({
         name: values[0]?.trim() || '',
-        email: values[1]?.trim() || '',
-        pin: values[2]?.trim() || '',
-        role: values[3]?.trim() || 'user',
+        identification: values[1]?.trim() || '',
+        email: values[2]?.trim() || null,
+        pin: values[3]?.trim() || null,
+        role: values[4]?.trim() || 'user',
       });
     }
 
@@ -294,23 +304,25 @@ export class AdminService {
    */
   async createUser(data: {
     name: string;
-    email: string;
-    pin: string;
+    identification: string;
+    email?: string;
+    pin?: string;
     role?: UserRole;
   }) {
     const existingUser = await this.userRepository.findOne({
-      where: { email: data.email },
+      where: { identification: data.identification },
     });
 
     if (existingUser) {
-      throw new BadRequestException('El usuario ya existe');
+      throw new BadRequestException('El usuario ya existe con esa identificación');
     }
 
-    const pinHash = await this.authService.hashPin(data.pin);
+    const pinHash = data.pin ? await this.authService.hashPin(data.pin) : null;
 
     const user = this.userRepository.create({
       name: data.name,
-      email: data.email,
+      identification: data.identification,
+      email: data.email || null,
       pinHash,
       role: data.role || UserRole.USER,
       flowers: 0,

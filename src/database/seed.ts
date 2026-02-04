@@ -32,6 +32,7 @@ async function seed() {
     const users = [
       {
         name: 'María García',
+        identification: '12345678',
         email: 'maria@emaus.com',
         pinHash,
         flowers: 45,
@@ -39,6 +40,7 @@ async function seed() {
       },
       {
         name: 'Ana Martínez',
+        identification: '23456789',
         email: 'ana@emaus.com',
         pinHash,
         flowers: 120,
@@ -46,6 +48,7 @@ async function seed() {
       },
       {
         name: 'Isabel Rodríguez',
+        identification: '34567890',
         email: 'isabel@emaus.com',
         pinHash,
         flowers: 95,
@@ -53,6 +56,7 @@ async function seed() {
       },
       {
         name: 'Carmen López',
+        identification: '45678901',
         email: 'carmen@emaus.com',
         pinHash,
         flowers: 78,
@@ -60,6 +64,7 @@ async function seed() {
       },
       {
         name: 'Admin Emaús',
+        identification: '99999999',
         email: 'admin@emaus.com',
         pinHash,
         flowers: 0,
@@ -69,15 +74,15 @@ async function seed() {
 
     for (const userData of users) {
       const existing = await userRepository.findOne({
-        where: { email: userData.email },
+        where: { identification: userData.identification },
       });
 
       if (!existing) {
         const user = userRepository.create(userData);
         await userRepository.save(user);
-        console.log(`✅ Usuario creado: ${userData.name} (${userData.email})`);
+        console.log(`✅ Usuario creado: ${userData.name} (ID: ${userData.identification})`);
       } else {
-        console.log(`⏭️  Usuario ya existe: ${userData.email}`);
+        console.log(`⏭️  Usuario ya existe: ${userData.identification}`);
       }
     }
 
@@ -105,10 +110,13 @@ async function seed() {
     }
 
     console.log('\n🌸 Seed completado exitosamente');
-    console.log('\nCredenciales de prueba:');
+    console.log('\nCredenciales de prueba (email + PIN):');
     console.log('  Email: maria@emaus.com');
     console.log('  PIN: 1234');
+    console.log('\nO con identificación:');
+    console.log('  Identificación: 12345678');
     console.log('\nAdmin:');
+    console.log('  Identificación: 99999999');
     console.log('  Email: admin@emaus.com');
     console.log('  PIN: 1234');
 

@@ -1,0 +1,8 @@
+name,identification,email,pin,role
+María García,12345678,maria@emaus.com,1234,user
+Ana Martínez,23456789,ana@emaus.com,1234,user
+Isabel Rodríguez,34567890,isabel@emaus.com,1234,user
+Carmen López,45678901,carmen@emaus.com,1234,user
+Admin Emaús,99999999,admin@emaus.com,1234,admin
+Pedro Sánchez,11111111,,,user
+Lucía Fernández,22222222,lucia@emaus.com,,user

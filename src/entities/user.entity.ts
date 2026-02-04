@@ -21,10 +21,13 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ unique: true })
+  @Column({ unique: true, nullable: true })
   email: string;
 
-  @Column({ name: 'pin_hash' })
+  @Column({ name: 'identification', unique: true, nullable: true })
+  identification: string;
+
+  @Column({ name: 'pin_hash', nullable: true })
   pinHash: string;
 
   @Column({ type: 'int', default: 0 })
