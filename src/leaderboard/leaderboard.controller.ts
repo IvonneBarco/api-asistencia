@@ -1,9 +1,8 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Request } from '@nestjs/common';
 import { LeaderboardService } from './leaderboard.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('leaderboard')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 export class LeaderboardController {
   constructor(private leaderboardService: LeaderboardService) {}
 
