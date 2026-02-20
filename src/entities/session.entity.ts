@@ -34,6 +34,9 @@ export class Session {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @Column({ name: 'session_pin', type: 'varchar', length: 4, nullable: true })
+  sessionPin: string;
+
   @OneToMany(() => Attendance, (attendance) => attendance.session)
   attendances: Attendance[];
 }

@@ -19,11 +19,17 @@ export class AttendanceController {
   @Post('scan')
   @HttpCode(HttpStatus.OK)
   async scanAttendance(@Request() req, @Body() dto: ScanAttendanceDto) {
-    const result = await this.attendanceService.scanAttendance(
-      req.user.userId,
-      dto,
-    );
-
+    let result;
+    if (dto.qrCode) {
+      result = await this.attendanceService.scanAttendance(req.user.userId, dto);
+    } else if (dto.sessionPin) {
+      result = await this.attendanceService.scanAttendanceByPin(req.user.userId, dto.sessionPin);
+    } else {
+      return {
+        data: null,
+        message: 'Debes enviar un código QR o un PIN válido',
+      };
+    }
     return {
       data: result,
     };

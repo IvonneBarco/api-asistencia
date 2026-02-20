@@ -30,12 +30,16 @@ export class AdminService {
     // Generar sessionId único
     const sessionId = `SESSION-${new Date().toISOString().split('T')[0]}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
+    // Generar PIN de 4 dígitos
+    const sessionPin = (Math.floor(1000 + Math.random() * 9000)).toString();
+
     const session = this.sessionRepository.create({
       sessionId,
       name: dto.name,
       startsAt: new Date(dto.startsAt),
       endsAt: new Date(dto.endsAt),
       isActive: true,
+      sessionPin,
     });
 
     await this.sessionRepository.save(session);
@@ -46,6 +50,7 @@ export class AdminService {
     return {
       id: session.id,
       sessionId: session.sessionId,
+      sessionPin: session.sessionPin,
       name: session.name,
       startsAt: session.startsAt,
       endsAt: session.endsAt,
@@ -72,6 +77,7 @@ export class AdminService {
       endsAt: session.endsAt,
       isActive: session.isActive,
       createdAt: session.createdAt,
+      sessionPin: session.sessionPin,
     }));
   }
 

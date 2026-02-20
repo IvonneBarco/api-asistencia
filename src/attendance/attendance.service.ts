@@ -1,3 +1,4 @@
+
 import {
   Injectable,
   BadRequestException,
@@ -180,6 +181,99 @@ export class AttendanceService {
         `Error recording attendance for user ${userId}: ${error.message}`,
         error.stack,
       );
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+  
+  async scanAttendanceByPin(userId: string, sessionPin: string): Promise<ScanAttendanceResponse> {
+    // Buscar sesión activa por PIN
+    const session = await this.sessionRepository.findOne({
+      where: { sessionPin },
+    });
+
+    if (!session) {
+      this.logger.warn(`Session not found for PIN: ${sessionPin} (user ${userId})`);
+      throw new NotFoundException('Sesión no encontrada para este PIN');
+    }
+
+    if (!session.isActive) {
+      this.logger.warn(`Session ${session.sessionId} (PIN ${sessionPin}) is inactive for user ${userId}`);
+      throw new BadRequestException('Esta sesión ya no está activa');
+    }
+
+    // Validar ventana de tiempo
+    const now = new Date();
+    if (now < session.startsAt) {
+      this.logger.warn(`Session ${session.sessionId} (PIN ${sessionPin}) hasn't started yet for user ${userId}`);
+      throw new BadRequestException('Esta sesión aún no ha comenzado');
+    }
+    if (now > session.endsAt) {
+      this.logger.warn(`Session ${session.sessionId} (PIN ${sessionPin}) has ended for user ${userId}`);
+      throw new BadRequestException('Esta sesión ya finalizó');
+    }
+
+    // Reutilizar lógica de registro de asistencia (sin QR)
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const existingAttendance = await queryRunner.manager.findOne(
+        Attendance,
+        {
+          where: {
+            user: { id: userId },
+            session: { id: session.id },
+          },
+          lock: { mode: 'pessimistic_write' },
+        },
+      );
+
+      if (existingAttendance) {
+        await queryRunner.rollbackTransaction();
+        const user = await this.userRepository.findOne({ where: { id: userId }, select: ['flowers'] });
+        this.logger.log(`Duplicate PIN attendance for user ${userId} in session ${session.sessionId}`);
+        return {
+          added: false,
+          flowers: user?.flowers || 0,
+          message: 'Esta sesión ya fue registrada anteriormente',
+        };
+      }
+
+      const attendance = queryRunner.manager.create(Attendance, {
+        user: { id: userId },
+        session: { id: session.id },
+        rawQr: '', // Valor por defecto para cumplir NOT NULL
+      });
+      await queryRunner.manager.save(attendance);
+      await queryRunner.manager.increment(User, { id: userId }, 'flowers', 1);
+      await queryRunner.commitTransaction();
+      const updatedUser = await this.userRepository.findOne({ where: { id: userId }, select: ['flowers'] });
+      this.logger.log(`Attendance by PIN recorded for user ${userId} in session ${session.sessionId}. Total flowers: ${updatedUser.flowers}`);
+      return {
+        added: true,
+        flowers: updatedUser.flowers,
+        message: '¡Asistencia Registrada!',
+        session: {
+          id: session.sessionId,
+          name: session.name,
+          date: session.startsAt,
+        },
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      if (error.code === '23505') {
+        this.logger.warn(`Unique constraint violation for user ${userId} in session ${session.sessionId}`);
+        const user = await this.userRepository.findOne({ where: { id: userId }, select: ['flowers'] });
+        return {
+          added: false,
+          flowers: user?.flowers || 0,
+          message: 'Esta sesión ya fue registrada anteriormente',
+        };
+      }
+      this.logger.error(`Error recording attendance by PIN for user ${userId}: ${error.message}`, error.stack);
       throw error;
     } finally {
       await queryRunner.release();
