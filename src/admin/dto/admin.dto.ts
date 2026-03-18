@@ -3,6 +3,9 @@ import {
   IsNotEmpty,
   IsDateString,
   IsOptional,
+  IsUUID,
+  IsArray,
+  ArrayNotEmpty,
 } from 'class-validator';
 
 export class CreateSessionDto {
@@ -64,4 +67,15 @@ export class RemoveFromGroupDto {
   @IsString()
   @IsOptional()
   reason?: string;
+}
+
+export class RegisterAttendanceDto {
+  @IsUUID('4', { message: 'El ID del usuario debe ser un UUID válido' })
+  @IsNotEmpty({ message: 'El ID del usuario es requerido' })
+  userId: string;
+
+  @IsArray({ message: 'sessionIds debe ser un array' })
+  @ArrayNotEmpty({ message: 'Debe proporcionar al menos una sesión' })
+  @IsUUID('4', { each: true, message: 'Cada ID de sesión debe ser un UUID válido' })
+  sessionIds: string[];
 }

@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminService } from './admin.service';
-import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto } from './dto/admin.dto';
+import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -164,6 +164,21 @@ export class AdminController {
   @Get('users/:userId/group-history')
   async getUserGroupHistory(@Param('userId') userId: string) {
     const data = await this.groupsService.getUserGroupHistory(userId);
+    
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  /**
+   * POST /api/admin/attendance/register
+   * Registra manualmente asistencias para un usuario a múltiples sesiones
+   * Sin validar si las sesiones están activas o vencidas
+   */
+  @Post('attendance/register')
+  async registerAttendanceManually(@Body() dto: RegisterAttendanceDto) {
+    const data = await this.adminService.registerAttendanceManually(dto);
     
     return {
       success: true,

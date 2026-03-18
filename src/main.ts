@@ -9,14 +9,14 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS (Bearer token, sin cookies)
-  const allowedOrigins = (process.env.CORS_ORIGIN ?? '')
+  const rawOrigins = (process.env.CORS_ORIGIN ?? '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins, // 👈 IMPORTANTE: array explícito
-    credentials: false,     // 👈 correcto para Authorization: Bearer
+    origin: rawOrigins.length > 0 ? rawOrigins : true, // true = cualquier origen (dev)
+    credentials: false,     // correcto para Authorization: Bearer
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });

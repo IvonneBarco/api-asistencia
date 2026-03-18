@@ -4,11 +4,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, In } from 'typeorm';
 import { Session } from '../entities/session.entity';
 import { User, UserRole } from '../entities/user.entity';
+import { Attendance } from '../entities/attendance.entity';
 import { QrService } from '../services/qr.service';
-import { CreateSessionDto } from './dto/admin.dto';
+import { CreateSessionDto, RegisterAttendanceDto } from './dto/admin.dto';
 import { AuthService } from '../auth/auth.service';
 import * as crypto from 'crypto';
 
@@ -19,8 +20,11 @@ export class AdminService {
     private sessionRepository: Repository<Session>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(Attendance)
+    private attendanceRepository: Repository<Attendance>,
     private qrService: QrService,
     private authService: AuthService,
+    private dataSource: DataSource,
   ) {}
 
   /**
@@ -369,6 +373,113 @@ export class AdminService {
       email: user.email,
       role: user.role,
       flowers: user.flowers,
+    };
+  }
+
+  /**
+   * Registra asistencias manualmente para un usuario a múltiples sesiones
+   * Sin validar si las sesiones están activas o vencidas (privilegio de admin)
+   */
+  async registerAttendanceManually(dto: RegisterAttendanceDto) {
+    // Validar que el usuario existe
+    const user = await this.userRepository.findOne({
+      where: { id: dto.userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Validar que todas las sesiones existen
+    const sessions = await this.sessionRepository.find({
+      where: { id: In(dto.sessionIds) },
+    });
+
+    if (sessions.length !== dto.sessionIds.length) {
+      const foundIds = sessions.map(s => s.id);
+      const missingIds = dto.sessionIds.filter(id => !foundIds.includes(id));
+      throw new NotFoundException(
+        `Sesiones no encontradas: ${missingIds.join(', ')}`
+      );
+    }
+
+    const results = {
+      registered: [],
+      alreadyRegistered: [],
+      flowersAdded: 0,
+      totalFlowers: user.flowers,
+    };
+
+    // Registrar asistencias dentro de una transacción
+    await this.dataSource.transaction(async (manager) => {
+      for (const session of sessions) {
+        try {
+          // Verificar si ya existe la asistencia
+          const existingAttendance = await manager.findOne(Attendance, {
+            where: {
+              user: { id: user.id },
+              session: { id: session.id },
+            },
+          });
+
+          if (existingAttendance) {
+            results.alreadyRegistered.push({
+              sessionId: session.id,
+              sessionName: session.name,
+            });
+            continue;
+          }
+
+          // Crear la asistencia
+          const attendance = manager.create(Attendance, {
+            user: user,
+            session: session,
+            rawQr: 'MANUAL_ADMIN_REGISTRATION',
+          });
+
+          await manager.save(attendance);
+
+          // Incrementar flores del usuario
+          user.flowers += 1;
+          results.flowersAdded += 1;
+
+          results.registered.push({
+            sessionId: session.id,
+            sessionName: session.name,
+            date: session.startsAt,
+          });
+        } catch (error) {
+          // Si hay error de constraint unique, lo consideramos ya registrado
+          if (error.code === '23505') {
+            results.alreadyRegistered.push({
+              sessionId: session.id,
+              sessionName: session.name,
+            });
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      // Actualizar flores del usuario
+      if (results.flowersAdded > 0) {
+        await manager.save(user);
+        results.totalFlowers = user.flowers;
+      }
+    });
+
+    return {
+      message: 'Proceso de registro completado',
+      userId: user.id,
+      userName: user.name,
+      registered: results.registered.length,
+      alreadyRegistered: results.alreadyRegistered.length,
+      flowersAdded: results.flowersAdded,
+      totalFlowers: results.totalFlowers,
+      details: {
+        registered: results.registered,
+        alreadyRegistered: results.alreadyRegistered,
+      },
     };
   }
 }
