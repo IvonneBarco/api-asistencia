@@ -13,6 +13,9 @@ import {
   Request,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { mkdirSync, unlinkSync } from 'fs';
 import { AdminService } from './admin.service';
 import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,6 +23,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { GroupsService } from '../groups/groups.service';
+import { ImageService } from '../services/image.service';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -28,6 +32,7 @@ export class AdminController {
   constructor(
     private adminService: AdminService,
     private groupsService: GroupsService,
+    private imageService: ImageService,
   ) {}
 
   @Post('sessions')
@@ -75,6 +80,58 @@ export class AdminController {
     return {
       data,
       total: data.length,
+    };
+  }
+
+  @Get('users/:userId/photo')
+  async getUserPhoto(@Param('userId') userId: string) {
+    const data = await this.adminService.getUserPhoto(userId);
+
+    return {
+      data,
+    };
+  }
+
+  @Post('users/:userId/photo')
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (_req, _file, callback) => {
+        const uploadPath = join(process.cwd(), 'uploads', 'profile-photos');
+        mkdirSync(uploadPath, { recursive: true });
+        callback(null, uploadPath);
+      },
+      filename: (req, file, callback) => {
+        const fileExtension = extname(file.originalname).toLowerCase() || '.jpg';
+        callback(null, `${req.params.userId}-${Date.now()}${fileExtension}`);
+      },
+    }),
+    limits: {
+      fileSize: 5 * 1024 * 1024,
+    },
+  }))
+  async uploadUserPhoto(@Param('userId') userId: string, @UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No se proporcionó ninguna fotografía');
+    }
+
+    if (!file.mimetype.startsWith('image/')) {
+      if (file.path) {
+        try {
+          unlinkSync(file.path);
+        } catch {
+          // Ignorar errores al limpiar un archivo inválido
+        }
+      }
+
+      throw new BadRequestException('La fotografía debe ser una imagen');
+    }
+
+    const avatarPath = await this.imageService.optimizeProfilePhoto(file.path);
+    const data = await this.adminService.updateUserPhoto(userId, avatarPath);
+
+    return {
+      data,
+      message: 'Fotografía actualizada correctamente',
     };
   }
 

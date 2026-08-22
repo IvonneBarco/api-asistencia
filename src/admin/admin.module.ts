@@ -8,10 +8,11 @@ import { AdminController } from './admin.controller';
 import { QrService } from '../services/qr.service';
 import { AuthModule } from '../auth/auth.module';
 import { GroupsModule } from '../groups/groups.module';
+import { ImageService } from '../services/image.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Session, User, Attendance]), AuthModule, GroupsModule],
   controllers: [AdminController],
-  providers: [AdminService, QrService],
+  providers: [AdminService, QrService, ImageService],
 })
 export class AdminModule {}
