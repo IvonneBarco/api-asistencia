@@ -1,6 +1,6 @@
 {
   "name": "api-asistencia",
-  "version": "1.0.0",
+  "version": "1.6.0",
   "description": "Backend API para Emaús Mujeres - Sistema de asistencia con flores",
   "author": "Emaús Mujeres",
   "private": true,

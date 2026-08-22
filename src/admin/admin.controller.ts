@@ -17,7 +17,7 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { mkdirSync, unlinkSync } from 'fs';
 import { AdminService } from './admin.service';
-import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto } from './dto/admin.dto';
+import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto, CreateSaintLoanDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -64,6 +64,27 @@ export class AdminController {
   async deactivateSession(@Param('sessionId') sessionId: string) {
     const data = await this.adminService.deactivateSession(sessionId);
     return data;
+  }
+
+  @Get('sessions/:sessionId/saint-loans')
+  async getSessionSaintLoans(@Param('sessionId') sessionId: string) {
+    return { data: await this.adminService.getSessionSaintLoans(sessionId) };
+  }
+
+  @Post('sessions/:sessionId/saint-loans')
+  async registerSaintLoan(
+    @Param('sessionId') sessionId: string,
+    @Body() dto: CreateSaintLoanDto,
+  ) {
+    return {
+      data: await this.adminService.registerSaintLoan(sessionId, dto.userId, dto.saint),
+      message: 'Préstamo registrado correctamente',
+    };
+  }
+
+  @Get('saint-loans/history')
+  async getSaintLoanHistory() {
+    return { data: await this.adminService.getSaintLoanHistory() };
   }
 
   @Post('sync-users')

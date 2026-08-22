@@ -9,9 +9,10 @@ import { QrService } from '../services/qr.service';
 import { AuthModule } from '../auth/auth.module';
 import { GroupsModule } from '../groups/groups.module';
 import { ImageService } from '../services/image.service';
+import { SaintLoan } from '../entities/saint-loan.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Session, User, Attendance]), AuthModule, GroupsModule],
+  imports: [TypeOrmModule.forFeature([Session, User, Attendance, SaintLoan]), AuthModule, GroupsModule],
   controllers: [AdminController],
   providers: [AdminService, QrService, ImageService],
 })

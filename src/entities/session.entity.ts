@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Attendance } from './attendance.entity';
+import { SaintLoan } from './saint-loan.entity';
 
 @Entity('sessions')
 export class Session {
@@ -39,4 +40,7 @@ export class Session {
 
   @OneToMany(() => Attendance, (attendance) => attendance.session)
   attendances: Attendance[];
+
+  @OneToMany(() => SaintLoan, (saintLoan) => saintLoan.session)
+  saintLoans: SaintLoan[];
 }

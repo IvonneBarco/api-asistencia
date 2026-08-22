@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Attendance } from './attendance.entity';
 import { Group } from './group.entity';
+import { SaintLoan } from './saint-loan.entity';
 
 export enum UserRole {
   USER = 'user',
@@ -61,4 +62,7 @@ export class User {
 
   @OneToMany(() => Attendance, (attendance) => attendance.user)
   attendances: Attendance[];
+
+  @OneToMany(() => SaintLoan, (saintLoan) => saintLoan.user)
+  saintLoans: SaintLoan[];
 }
