@@ -13,6 +13,7 @@ import { CreateSessionDto, RegisterAttendanceDto } from './dto/admin.dto';
 import { AuthService } from '../auth/auth.service';
 import * as crypto from 'crypto';
 import { ImageService } from '../services/image.service';
+import { SaintLoan, SaintName } from '../entities/saint-loan.entity';
 
 @Injectable()
 export class AdminService {
@@ -23,11 +24,115 @@ export class AdminService {
     private userRepository: Repository<User>,
     @InjectRepository(Attendance)
     private attendanceRepository: Repository<Attendance>,
+    @InjectRepository(SaintLoan)
+    private saintLoanRepository: Repository<SaintLoan>,
     private qrService: QrService,
     private authService: AuthService,
     private dataSource: DataSource,
     private imageService: ImageService,
   ) {}
+
+  async getSessionSaintLoans(sessionId: string) {
+    const session = await this.sessionRepository.findOne({ where: { sessionId } });
+    if (!session) {
+      throw new NotFoundException('Sesión no encontrada');
+    }
+
+    const loans = await this.saintLoanRepository.find({
+      where: { sessionId: session.id },
+      relations: ['user'],
+      order: { createdAt: 'ASC' },
+    });
+
+    return {
+      session: { id: session.id, sessionId: session.sessionId, name: session.name },
+      catalog: Object.values(SaintName),
+      loans: loans.map((loan) => this.serializeSaintLoan(loan)),
+    };
+  }
+
+  async registerSaintLoan(sessionId: string, userId: string, saint: SaintName) {
+    return this.dataSource.transaction(async (manager) => {
+      const session = await manager.findOne(Session, {
+        where: { sessionId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!session) {
+        throw new NotFoundException('Sesión no encontrada');
+      }
+
+      const user = await manager.findOne(User, { where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      const total = await manager.count(SaintLoan, { where: { sessionId: session.id } });
+      if (total >= 3) {
+        throw new BadRequestException('La sesión ya tiene el máximo de 3 santos asignados');
+      }
+
+      const loan = manager.create(SaintLoan, {
+        sessionId: session.id,
+        userId: user.id,
+        saint,
+        session,
+        user,
+      });
+
+      try {
+        const savedLoan = await manager.save(loan);
+        return this.serializeSaintLoan(savedLoan as SaintLoan, user, session);
+      } catch (error) {
+        if (error?.code === '23505') {
+          if (error.constraint === 'UQ_saint_loans_session_saint') {
+            throw new BadRequestException('Este santo ya está asignado en la sesión');
+          }
+          if (error.constraint === 'UQ_saint_loans_session_user') {
+            throw new BadRequestException('Este usuario ya lleva un santo en la sesión');
+          }
+        }
+        throw error;
+      }
+    });
+  }
+
+  async getSaintLoanHistory() {
+    const loans = await this.saintLoanRepository.find({
+      relations: ['user', 'session'],
+      order: { createdAt: 'DESC' },
+    });
+    const counts = new Map<string, { userId: string; userName: string; saints: Record<SaintName, number> }>();
+
+    for (const loan of loans) {
+      const current = counts.get(loan.userId) ?? {
+        userId: loan.userId,
+        userName: loan.user?.name ?? 'Usuario desconocido',
+        saints: {
+          [SaintName.ROSA_MISTICA]: 0,
+          [SaintName.MEDALLA_MILAGROSA]: 0,
+          [SaintName.SAGRADO_CORAZON]: 0,
+        },
+      };
+      current.saints[loan.saint] += 1;
+      counts.set(loan.userId, current);
+    }
+
+    return {
+      catalog: Object.values(SaintName),
+      loans: loans.map((loan) => this.serializeSaintLoan(loan)),
+      counts: Array.from(counts.values()),
+    };
+  }
+
+  private serializeSaintLoan(loan: SaintLoan, user = loan.user, session = loan.session) {
+    return {
+      id: loan.id,
+      saint: loan.saint,
+      createdAt: loan.createdAt,
+      user: user ? { id: user.id, name: user.name, identification: user.identification } : undefined,
+      session: session ? { id: session.id, sessionId: session.sessionId, name: session.name } : undefined,
+    };
+  }
 
   /**
    * Crea una nueva sesión y genera su QR
