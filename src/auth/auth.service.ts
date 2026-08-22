@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload, AuthResponse } from './interfaces/auth.interface';
+import { ImageService } from '../services/image.service';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private imageService: ImageService,
   ) {}
 
   async validateUser(email: string, pin: string): Promise<User | null> {
@@ -58,7 +60,9 @@ export class AuthService {
         email: user.email,
         name: user.name,
         flowers: user.flowers,
+        flores: user.flowers,
         role: user.role,
+        avatar: user.avatar,
       },
     };
   }
@@ -87,13 +91,29 @@ export class AuthService {
         email: user.email,
         name: user.name,
         flowers: user.flowers,
+        flores: user.flowers,
         role: user.role,
+        avatar: user.avatar,
       },
     };
   }
 
   async getUserById(userId: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id: userId } });
+  }
+
+  async updateUserPhoto(userId: string, avatarPath: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    const previousAvatar = user.avatar;
+    user.avatar = avatarPath;
+    const savedUser = await this.userRepository.save(user);
+    this.imageService.removeStoredPhoto(previousAvatar);
+    return savedUser;
   }
 
   async hashPin(pin: string): Promise<string> {

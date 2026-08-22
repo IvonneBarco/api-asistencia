@@ -12,6 +12,7 @@ import { QrService } from '../services/qr.service';
 import { CreateSessionDto, RegisterAttendanceDto } from './dto/admin.dto';
 import { AuthService } from '../auth/auth.service';
 import * as crypto from 'crypto';
+import { ImageService } from '../services/image.service';
 
 @Injectable()
 export class AdminService {
@@ -25,6 +26,7 @@ export class AdminService {
     private qrService: QrService,
     private authService: AuthService,
     private dataSource: DataSource,
+    private imageService: ImageService,
   ) {}
 
   /**
@@ -169,7 +171,9 @@ export class AdminService {
       email: user.email,
       identification: user.identification,
       flowers: user.flowers,
+      flores: user.flowers,
       role: user.role,
+      avatar: user.avatar,
       createdAt: user.createdAt,
       group: user.group ? {
         id: user.group.id,
@@ -177,6 +181,40 @@ export class AdminService {
         isActive: user.group.isActive,
       } : null,
     }));
+  }
+
+  async getUserPhoto(userId: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return {
+      userId: user.id,
+      avatar: user.avatar,
+      hasPhoto: !!user.avatar,
+    };
+  }
+
+  async updateUserPhoto(userId: string, avatarPath: string) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['group'],
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const previousAvatar = user.avatar;
+    user.avatar = avatarPath;
+    await this.userRepository.save(user);
+    this.imageService.removeStoredPhoto(previousAvatar);
+
+    return this.serializeUser(user);
   }
 
   /**
@@ -480,6 +518,25 @@ export class AdminService {
         registered: results.registered,
         alreadyRegistered: results.alreadyRegistered,
       },
+    };
+  }
+
+  private serializeUser(user: User) {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      identification: user.identification,
+      flowers: user.flowers,
+      flores: user.flowers,
+      role: user.role,
+      avatar: user.avatar,
+      createdAt: user.createdAt,
+      group: user.group ? {
+        id: user.group.id,
+        name: user.group.name,
+        isActive: user.group.isActive,
+      } : null,
     };
   }
 }

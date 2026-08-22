@@ -33,6 +33,9 @@ export class User {
   @Column({ name: 'pin_hash', nullable: true })
   pinHash: string;
 
+  @Column({ nullable: true })
+  avatar: string;
+
   @Column({ type: 'int', default: 0 })
   flowers: number;
 
