@@ -13,6 +13,7 @@ import { Session } from './entities/session.entity';
 import { Attendance } from './entities/attendance.entity';
 import { Group } from './entities/group.entity';
 import { GroupAssignmentAudit } from './entities/group-assignment-audit.entity';
+import { SaintLoan } from './entities/saint-loan.entity';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { GroupAssignmentAudit } from './entities/group-assignment-audit.entity';
     ssl: configService.get('NODE_ENV') === 'production'
       ? { rejectUnauthorized: false }
       : false,
-    entities: [User, Session, Attendance, Group, GroupAssignmentAudit],
+    entities: [User, Session, Attendance, Group, GroupAssignmentAudit, SaintLoan],
     synchronize: configService.get('NODE_ENV') === 'development',
     logging: configService.get('NODE_ENV') === 'development',
   }),
