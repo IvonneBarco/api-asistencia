@@ -2,7 +2,8 @@ import { mkdirSync } from 'fs';
 import { join } from 'path';
 
 export const getUploadsDirectory = (): string =>
-  process.env.UPLOADS_DIR || join(process.cwd(), 'uploads');
+  process.env.UPLOADS_DIR ||
+  (process.env.NODE_ENV === 'production' ? '/uploads' : join(process.cwd(), 'uploads'));
 
 export const getProfilePhotosDirectory = (): string =>
   join(getUploadsDirectory(), 'profile-photos');

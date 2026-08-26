@@ -98,8 +98,8 @@ del contenedor porque se reemplaza durante los deploys.
 Para conservar las fotos:
 
 1. Crea un Volume en el servicio del backend de Railway.
-2. Configura su mount path, por ejemplo `/data`.
-3. Define la variable `UPLOADS_DIR=/data/uploads` en el backend.
+2. Configura el mount path `/uploads`.
+3. Define la variable `UPLOADS_DIR=/uploads` en el backend.
 4. Ejecuta el siguiente deploy.
 
 La base de datos seguirá guardando las rutas `/uploads/profile-photos/...` y la
