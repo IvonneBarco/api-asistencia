@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
 import { AppModule } from './app.module';
+import { ensureProfilePhotosDirectory, getUploadsDirectory } from './config/uploads';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -23,7 +23,8 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+  ensureProfilePhotosDirectory();
+  app.useStaticAssets(getUploadsDirectory(), {
     prefix: '/uploads',
   });
 

@@ -14,8 +14,8 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { mkdirSync, unlinkSync } from 'fs';
+import { extname } from 'path';
+import { unlinkSync } from 'fs';
 import { AdminService } from './admin.service';
 import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto, CreateSaintLoanDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -23,6 +23,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../entities/user.entity';
 import { GroupsService } from '../groups/groups.service';
+import { ensureProfilePhotosDirectory } from '../config/uploads';
 import { ImageService } from '../services/image.service';
 
 @Controller('admin')
@@ -117,9 +118,7 @@ export class AdminController {
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: (_req, _file, callback) => {
-        const uploadPath = join(process.cwd(), 'uploads', 'profile-photos');
-        mkdirSync(uploadPath, { recursive: true });
-        callback(null, uploadPath);
+            callback(null, ensureProfilePhotosDirectory());
       },
       filename: (req, file, callback) => {
         const fileExtension = extname(file.originalname).toLowerCase() || '.jpg';

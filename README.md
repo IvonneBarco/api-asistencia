@@ -89,6 +89,24 @@ npm run start:dev
 
 La API estará en `http://localhost:3000/api`
 
+### Fotos de perfil en Railway
+
+Las fotos de perfil se guardan en el directorio definido por `UPLOADS_DIR`. En
+desarrollo se usa `./uploads`; en Railway no debe usarse el filesystem normal
+del contenedor porque se reemplaza durante los deploys.
+
+Para conservar las fotos:
+
+1. Crea un Volume en el servicio del backend de Railway.
+2. Configura su mount path, por ejemplo `/data`.
+3. Define la variable `UPLOADS_DIR=/data/uploads` en el backend.
+4. Ejecuta el siguiente deploy.
+
+La base de datos seguirá guardando las rutas `/uploads/profile-photos/...` y la
+API las servirá desde el volumen persistente. Las fotos que ya desaparecieron
+en deploys anteriores no pueden recuperarse desde la base de datos; solo se
+conservarán las nuevas cargas realizadas después de configurar el volumen.
+
 ## 📱 API Endpoints
 
 ### Auth
