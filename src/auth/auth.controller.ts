@@ -13,12 +13,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { mkdirSync, unlinkSync } from 'fs';
+import { extname } from 'path';
+import { unlinkSync } from 'fs';
 import { AuthService } from './auth.service';
 import { LoginDto, LoginIdentificationDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ImageService } from '../services/image.service';
+import { ensureProfilePhotosDirectory } from '../config/uploads';
 
 @Controller('auth')
 export class AuthController {
@@ -72,9 +73,7 @@ export class AuthController {
   @UseInterceptors(FileInterceptor('file', {
     storage: diskStorage({
       destination: (_req, _file, callback) => {
-        const uploadPath = join(process.cwd(), 'uploads', 'profile-photos');
-        mkdirSync(uploadPath, { recursive: true });
-        callback(null, uploadPath);
+            callback(null, ensureProfilePhotosDirectory());
       },
       filename: (_req, file, callback) => {
         const fileExtension = extname(file.originalname).toLowerCase() || '.jpg';
