@@ -1,18 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
-import { extname, join } from 'path';
+import { existsSync, unlinkSync } from 'fs';
+import { basename, extname, join } from 'path';
 const sharp = require('sharp') as any;
+import { ensureProfilePhotosDirectory, getProfilePhotosDirectory } from '../config/uploads';
 
 @Injectable()
 export class ImageService {
-  private readonly uploadDirectory = join(process.cwd(), 'uploads', 'profile-photos');
-
   async optimizeProfilePhoto(filePath: string): Promise<string> {
-    mkdirSync(this.uploadDirectory, { recursive: true });
+    const uploadDirectory = ensureProfilePhotosDirectory();
 
     const fileName = `profile-${Date.now()}-${randomBytes(6).toString('hex')}.jpg`;
-    const outputPath = join(this.uploadDirectory, fileName);
+    const outputPath = join(uploadDirectory, fileName);
 
     try {
       await sharp(filePath)
@@ -43,11 +42,11 @@ export class ImageService {
     }
 
     const fileName = avatarPath.slice('/uploads/profile-photos/'.length);
-    if (!fileName || fileName !== `${fileName.split('/').pop()}` || extname(fileName) === '') {
+    if (!fileName || basename(fileName) !== fileName || extname(fileName) === '') {
       return;
     }
 
-    this.removeFile(join(this.uploadDirectory, fileName));
+    this.removeFile(join(getProfilePhotosDirectory(), fileName));
   }
 
   private removeFile(filePath: string): void {
