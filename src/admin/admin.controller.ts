@@ -175,13 +175,24 @@ export class AdminController {
       throw new BadRequestException('El archivo debe ser un CSV');
     }
 
-    const csvContent = file.buffer.toString('utf-8');
+    const csvContent = this.decodeCsvBuffer(file.buffer);
     const data = await this.adminService.importUsersFromCSV(csvContent);
     
     return {
       data,
       message: `Importación completada: ${data.created.length} creados, ${data.updated.length} actualizados, ${data.errors.length} errores`,
     };
+  }
+
+  private decodeCsvBuffer(buffer: Buffer): string {
+    try {
+      return new TextDecoder('utf-8', { fatal: true })
+        .decode(buffer)
+        .replace(/^\uFEFF/, '');
+    } catch {
+      // Algunos CSV exportados desde Excel usan Windows-1252/Latin-1.
+      return buffer.toString('latin1').replace(/^\uFEFF/, '');
+    }
   }
 
   /**
