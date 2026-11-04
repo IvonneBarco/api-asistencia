@@ -8,10 +8,13 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { ImageService } from '../services/image.service';
+import { Attendance } from '../entities/attendance.entity';
+import { Session } from '../entities/session.entity';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Attendance, Session, AttendancePeriod]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

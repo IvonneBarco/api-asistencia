@@ -7,6 +7,8 @@ import { User } from '../entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload, AuthResponse } from './interfaces/auth.interface';
 import { ImageService } from '../services/image.service';
+import { Attendance } from '../entities/attendance.entity';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +17,23 @@ export class AuthService {
     private userRepository: Repository<User>,
     private jwtService: JwtService,
     private imageService: ImageService,
+    @InjectRepository(Attendance)
+    private attendanceRepository: Repository<Attendance>,
+    @InjectRepository(AttendancePeriod)
+    private periodRepository: Repository<AttendancePeriod>,
   ) {}
+
+  private async countCurrentPeriodFlowers(userId: string): Promise<number> {
+    const period = await this.periodRepository.findOne({ where: { isActive: true } });
+    if (!period) return 0;
+
+    return this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .innerJoin('attendance.session', 'session')
+      .where('attendance.user_id = :userId', { userId })
+      .andWhere('session.period_id = :periodId', { periodId: period.id })
+      .getCount();
+  }
 
   async validateUser(email: string, pin: string): Promise<User | null> {
     const user = await this.userRepository.findOne({ where: { email } });
@@ -53,14 +71,15 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload);
 
+    const flowers = await this.countCurrentPeriodFlowers(user.id);
     return {
       token,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        flowers: user.flowers,
-        flores: user.flowers,
+        flowers,
+        flores: flowers,
         role: user.role,
         avatar: user.avatar,
       },
@@ -84,14 +103,15 @@ export class AuthService {
 
     const token = this.jwtService.sign(payload);
 
+    const flowers = await this.countCurrentPeriodFlowers(user.id);
     return {
       token,
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        flowers: user.flowers,
-        flores: user.flowers,
+        flowers,
+        flores: flowers,
         role: user.role,
         avatar: user.avatar,
       },
@@ -100,6 +120,10 @@ export class AuthService {
 
   async getUserById(userId: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id: userId } });
+  }
+
+  async getCurrentPeriodFlowers(userId: string): Promise<number> {
+    return this.countCurrentPeriodFlowers(userId);
   }
 
   async updateUserPhoto(userId: string, avatarPath: string): Promise<User> {

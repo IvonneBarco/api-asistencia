@@ -10,6 +10,7 @@ import { SaintLoan, SaintName } from '../entities/saint-loan.entity';
 import { QrService } from '../services/qr.service';
 import { AuthService } from '../auth/auth.service';
 import { ImageService } from '../services/image.service';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
 
 describe('AdminService saint loans', () => {
   let service: AdminService;
@@ -48,6 +49,7 @@ describe('AdminService saint loans', () => {
         { provide: getRepositoryToken(User), useValue: { findOne: jest.fn() } },
         { provide: getRepositoryToken(Attendance), useValue: {} },
         { provide: getRepositoryToken(SaintLoan), useValue: { find: jest.fn() } },
+        { provide: getRepositoryToken(AttendancePeriod), useValue: { findOne: jest.fn() } },
         { provide: QrService, useValue: {} },
         { provide: AuthService, useValue: {} },
         { provide: ImageService, useValue: {} },
