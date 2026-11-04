@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -7,6 +7,7 @@ import { User } from '../entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload, AuthResponse } from './interfaces/auth.interface';
 import { ImageService } from '../services/image.service';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto';
 import { Attendance } from '../entities/attendance.entity';
 import { AttendancePeriod } from '../entities/attendance-period.entity';
 
@@ -120,6 +121,66 @@ export class AuthService {
 
   async getUserById(userId: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id: userId } });
+  }
+
+  async getPublicProfile(userId: string, includePhone: boolean) {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['group'],
+    });
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      identification: user.identification,
+      avatar: user.avatar,
+      birthDate: user.birthDate,
+      firstEmausRetreatDate: user.firstEmausRetreatDate,
+      ...(includePhone ? { phoneNumber: user.phoneNumber } : {}),
+      group: user.group ? { id: user.group.id, name: user.group.name } : null,
+    };
+  }
+
+  async updateOwnProfile(userId: string, dto: UpdateOwnProfileDto) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
+
+    const duplicate = await this.userRepository.findOne({
+      where: { identification: dto.identification },
+    });
+    if (duplicate && duplicate.id !== userId) {
+      throw new BadRequestException('La identificación ya está registrada');
+    }
+
+    Object.assign(user, dto);
+    try {
+      const savedUser = await this.userRepository.save(user);
+      const flowers = await this.countCurrentPeriodFlowers(savedUser.id);
+      return {
+        id: savedUser.id,
+        email: savedUser.email,
+        identification: savedUser.identification,
+        name: savedUser.name,
+        flowers,
+        flores: flowers,
+        role: savedUser.role,
+        avatar: savedUser.avatar,
+        birthDate: savedUser.birthDate,
+        firstEmausRetreatDate: savedUser.firstEmausRetreatDate,
+        phoneNumber: savedUser.phoneNumber,
+      };
+    } catch (error) {
+      if (error?.code === '23505') {
+        throw new BadRequestException('La identificación ya está registrada');
+      }
+      throw error;
+    }
   }
 
   async getCurrentPeriodFlowers(userId: string): Promise<number> {

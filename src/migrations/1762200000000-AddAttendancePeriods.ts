@@ -5,7 +5,7 @@ export class AddAttendancePeriods1762200000000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "attendance_periods" (
+      CREATE TABLE IF NOT EXISTS "attendance_periods" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "name" character varying NOT NULL,
         "starts_at" date NOT NULL,
@@ -21,8 +21,12 @@ export class AddAttendancePeriods1762200000000 implements MigrationInterface {
       VALUES
         ('2025-2026', '2025-10-01', '2026-10-01', false),
         ('2026-2027', '2026-11-01', '2027-10-31', true)
+      ON CONFLICT ("name") DO UPDATE SET
+        "starts_at" = EXCLUDED."starts_at",
+        "ends_at" = EXCLUDED."ends_at",
+        "is_active" = EXCLUDED."is_active"
     `);
-    await queryRunner.query(`ALTER TABLE "sessions" ADD "period_id" uuid`);
+    await queryRunner.query(`ALTER TABLE "sessions" ADD COLUMN IF NOT EXISTS "period_id" uuid`);
     await queryRunner.query(`
       UPDATE "sessions"
       SET "period_id" = (SELECT "id" FROM "attendance_periods" WHERE "name" = '2025-2026')
@@ -30,9 +34,13 @@ export class AddAttendancePeriods1762200000000 implements MigrationInterface {
     `);
     await queryRunner.query(`ALTER TABLE "sessions" ALTER COLUMN "period_id" SET NOT NULL`);
     await queryRunner.query(`
-      ALTER TABLE "sessions"
-      ADD CONSTRAINT "FK_sessions_period" FOREIGN KEY ("period_id")
-      REFERENCES "attendance_periods"("id") ON DELETE RESTRICT ON UPDATE NO ACTION
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_sessions_period') THEN
+          ALTER TABLE "sessions"
+          ADD CONSTRAINT "FK_sessions_period" FOREIGN KEY ("period_id")
+          REFERENCES "attendance_periods"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+        END IF;
+      END $$;
     `);
   }
 

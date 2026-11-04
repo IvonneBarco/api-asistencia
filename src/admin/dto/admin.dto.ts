@@ -25,6 +25,20 @@ export class CreateSessionDto {
   periodId: string;
 }
 
+export class UpdateUserPersonalDataDto {
+  @IsDateString({}, { message: 'Fecha de nacimiento inválida' })
+  @IsOptional()
+  birthDate?: string;
+
+  @IsDateString({}, { message: 'Fecha del primer retiro inválida' })
+  @IsOptional()
+  firstEmausRetreatDate?: string;
+
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
+}
+
 export class SyncUsersDto {
   @IsString()
   @IsOptional()
