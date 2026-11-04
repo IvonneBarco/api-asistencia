@@ -5,6 +5,8 @@ import {
   Get,
   UseGuards,
   Request,
+  Param,
+  Put,
   HttpCode,
   HttpStatus,
   UploadedFile,
@@ -20,6 +22,7 @@ import { LoginDto, LoginIdentificationDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ImageService } from '../services/image.service';
 import { ensureProfilePhotosDirectory } from '../config/uploads';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -63,9 +66,30 @@ export class AuthController {
         name: user.name,
         flowers,
         flores: flowers,
+        identification: user.identification,
+        birthDate: user.birthDate,
+        firstEmausRetreatDate: user.firstEmausRetreatDate,
+        phoneNumber: user.phoneNumber,
         role: user.role,
         avatar: user.avatar,
       },
+    };
+  }
+
+  @Put('me/profile')
+  @UseGuards(JwtAuthGuard)
+  async updateOwnProfile(@Request() req, @Body() dto: UpdateOwnProfileDto) {
+    return {
+      data: await this.authService.updateOwnProfile(req.user.userId, dto),
+      message: 'Perfil actualizado correctamente',
+    };
+  }
+
+  @Get('users/:userId/profile')
+  @UseGuards(JwtAuthGuard)
+  async getUserProfile(@Param('userId') userId: string, @Request() req) {
+    return {
+      data: await this.authService.getPublicProfile(userId, req.user.role === 'admin'),
     };
   }
 

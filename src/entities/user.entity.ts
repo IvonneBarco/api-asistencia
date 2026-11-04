@@ -37,6 +37,15 @@ export class User {
   @Column({ nullable: true })
   avatar: string;
 
+  @Column({ name: 'birth_date', type: 'date', nullable: true })
+  birthDate: string;
+
+  @Column({ name: 'first_emaus_retreat_date', type: 'date', nullable: true })
+  firstEmausRetreatDate: string;
+
+  @Column({ name: 'phone_number', type: 'varchar', length: 30, nullable: true })
+  phoneNumber: string;
+
   @Column({ type: 'int', default: 0 })
   flowers: number;
 
