@@ -28,6 +28,23 @@ export class AttendanceService {
     private dataSource: DataSource,
   ) {}
 
+  private async countUserPeriodAttendances(userId: string, periodId?: string): Promise<number> {
+    if (!periodId) {
+      const user = await this.userRepository.findOne({
+        where: { id: userId },
+        select: ['flowers'],
+      });
+      return user?.flowers || 0;
+    }
+
+    return this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .innerJoin('attendance.session', 'session')
+      .where('attendance.user_id = :userId', { userId })
+      .andWhere('session.period_id = :periodId', { periodId })
+      .getCount();
+  }
+
   async scanAttendance(
     userId: string,
     dto: ScanAttendanceDto,
@@ -45,6 +62,7 @@ export class AttendanceService {
     // 2. Buscar sesión y validar que esté activa
     const session = await this.sessionRepository.findOne({
       where: { sessionId: validation.sessionId },
+      relations: ['period'],
     });
 
     if (!session) {
@@ -101,18 +119,13 @@ export class AttendanceService {
         await queryRunner.rollbackTransaction();
         
         // Obtener flores actuales del usuario
-        const user = await this.userRepository.findOne({
-          where: { id: userId },
-          select: ['flowers'],
-        });
-
         this.logger.log(
           `Duplicate scan detected for user ${userId} in session ${session.sessionId}`,
         );
 
         return {
           added: false,
-          flowers: user?.flowers || 0,
+          flowers: await this.countUserPeriodAttendances(userId, session.period?.id),
           message: 'Esta sesión ya fue registrada anteriormente',
         };
       }
@@ -137,18 +150,15 @@ export class AttendanceService {
       await queryRunner.commitTransaction();
 
       // Obtener el nuevo total de flores
-      const updatedUser = await this.userRepository.findOne({
-        where: { id: userId },
-        select: ['flowers'],
-      });
+      const currentFlowers = await this.countUserPeriodAttendances(userId, session.period?.id);
 
       this.logger.log(
-        `Attendance recorded for user ${userId} in session ${session.sessionId}. Total flowers: ${updatedUser.flowers}`,
+        `Attendance recorded for user ${userId} in session ${session.sessionId}. Total flowers: ${currentFlowers}`,
       );
 
       return {
         added: true,
-        flowers: updatedUser.flowers,
+        flowers: currentFlowers,
         message: 'Asistencia registrada. Has recibido 1 flor',
         session: {
           id: session.sessionId,
@@ -165,14 +175,9 @@ export class AttendanceService {
           `Unique constraint violation for user ${userId} in session ${session.sessionId}`,
         );
         
-        const user = await this.userRepository.findOne({
-          where: { id: userId },
-          select: ['flowers'],
-        });
-
         return {
           added: false,
-          flowers: user?.flowers || 0,
+          flowers: await this.countUserPeriodAttendances(userId, session.period?.id),
           message: 'Esta sesión ya fue registrada anteriormente',
         };
       }
@@ -191,6 +196,7 @@ export class AttendanceService {
     // Buscar sesión activa por PIN
     const session = await this.sessionRepository.findOne({
       where: { sessionPin },
+      relations: ['period'],
     });
 
     if (!session) {
@@ -233,11 +239,10 @@ export class AttendanceService {
 
       if (existingAttendance) {
         await queryRunner.rollbackTransaction();
-        const user = await this.userRepository.findOne({ where: { id: userId }, select: ['flowers'] });
         this.logger.log(`Duplicate PIN attendance for user ${userId} in session ${session.sessionId}`);
         return {
           added: false,
-          flowers: user?.flowers || 0,
+          flowers: await this.countUserPeriodAttendances(userId, session.period?.id),
           message: 'Esta sesión ya fue registrada anteriormente',
         };
       }
@@ -250,11 +255,11 @@ export class AttendanceService {
       await queryRunner.manager.save(attendance);
       await queryRunner.manager.increment(User, { id: userId }, 'flowers', 1);
       await queryRunner.commitTransaction();
-      const updatedUser = await this.userRepository.findOne({ where: { id: userId }, select: ['flowers'] });
-      this.logger.log(`Attendance by PIN recorded for user ${userId} in session ${session.sessionId}. Total flowers: ${updatedUser.flowers}`);
+      const currentFlowers = await this.countUserPeriodAttendances(userId, session.period?.id);
+      this.logger.log(`Attendance by PIN recorded for user ${userId} in session ${session.sessionId}. Total flowers: ${currentFlowers}`);
       return {
         added: true,
-        flowers: updatedUser.flowers,
+        flowers: currentFlowers,
         message: '¡Asistencia Registrada!',
         session: {
           id: session.sessionId,
@@ -266,10 +271,9 @@ export class AttendanceService {
       await queryRunner.rollbackTransaction();
       if (error.code === '23505') {
         this.logger.warn(`Unique constraint violation for user ${userId} in session ${session.sessionId}`);
-        const user = await this.userRepository.findOne({ where: { id: userId }, select: ['flowers'] });
         return {
           added: false,
-          flowers: user?.flowers || 0,
+          flowers: await this.countUserPeriodAttendances(userId, session.period?.id),
           message: 'Esta sesión ya fue registrada anteriormente',
         };
       }

@@ -1,14 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, UserRole } from '../entities/user.entity';
 import { Attendance } from '../entities/attendance.entity';
 import { Session } from '../entities/session.entity';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
 
 export interface LeaderboardFilters {
   from?: string;
   to?: string;
   groupId?: string;
+  periodId?: string;
 }
 
 @Injectable()
@@ -20,6 +22,8 @@ export class LeaderboardService {
     private attendanceRepository: Repository<Attendance>,
     @InjectRepository(Session)
     private sessionRepository: Repository<Session>,
+    @InjectRepository(AttendancePeriod)
+    private periodRepository: Repository<AttendancePeriod>,
   ) {}
 
   async getLeaderboard(currentUserId?: string, filters: LeaderboardFilters = {}) {
@@ -36,6 +40,16 @@ export class LeaderboardService {
     const eligibleSessionsQuery = this.sessionRepository
       .createQueryBuilder('session')
       .where('1=1');
+
+    const period = filters.periodId
+      ? await this.periodRepository.findOne({ where: { id: filters.periodId } })
+      : await this.periodRepository.findOne({ where: { isActive: true } });
+    if (!period) {
+      throw new NotFoundException('Período de asistencia no encontrado');
+    }
+    eligibleSessionsQuery.andWhere('session.period_id = :periodId', {
+      periodId: period.id,
+    });
 
     if (filters.from) {
       eligibleSessionsQuery.andWhere('session.starts_at >= :from', {
@@ -122,7 +136,7 @@ export class LeaderboardService {
       attendances,
       participation,
       // Retained for the existing Garden UI until its copy is migrated.
-      flores: user.flowers,
+      flores: attendances,
       isCurrentUser: currentUserId ? user.id === currentUserId : false,
       };
     });
@@ -142,6 +156,14 @@ export class LeaderboardService {
         startsAt: session.startsAt,
         attendances: sessionStats.get(session.id) || 0,
       })),
+      period: period
+        ? {
+            id: period.id,
+            name: period.name,
+            startsAt: period.startsAt,
+            endsAt: period.endsAt,
+          }
+        : undefined,
     };
   }
 }

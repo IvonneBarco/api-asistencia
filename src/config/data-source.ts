@@ -7,6 +7,7 @@ import { Attendance } from '../entities/attendance.entity';
 import { Group } from '../entities/group.entity';
 import { GroupAssignmentAudit } from '../entities/group-assignment-audit.entity';
 import { SaintLoan } from '../entities/saint-loan.entity';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
 
 config();
 
@@ -22,7 +23,7 @@ export const AppDataSource = new DataSource(
         type: 'postgres',
         url: databaseUrl,
         ssl: isProduction ? { rejectUnauthorized: false } : false,
-        entities: [User, Session, Attendance, Group, GroupAssignmentAudit, SaintLoan],
+        entities: [User, Session, Attendance, AttendancePeriod, Group, GroupAssignmentAudit, SaintLoan],
         migrations: ['dist/migrations/*.js'], // Usa archivos compilados
         synchronize: false,
         logging: true,
@@ -34,7 +35,7 @@ export const AppDataSource = new DataSource(
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        entities: [User, Session, Attendance, Group, GroupAssignmentAudit, SaintLoan],
+        entities: [User, Session, Attendance, AttendancePeriod, Group, GroupAssignmentAudit, SaintLoan],
         migrations: ['src/migrations/*.ts'],
         synchronize: false,
         logging: true,

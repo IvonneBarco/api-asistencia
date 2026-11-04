@@ -55,13 +55,14 @@ export class AuthController {
       throw new Error('Usuario no encontrado');
     }
 
+    const flowers = await this.authService.getCurrentPeriodFlowers(user.id);
     return {
       data: {
         id: user.id,
         email: user.email,
         name: user.name,
-        flowers: user.flowers,
-        flores: user.flowers,
+        flowers,
+        flores: flowers,
         role: user.role,
         avatar: user.avatar,
       },
@@ -101,14 +102,15 @@ export class AuthController {
     const avatarPath = await this.imageService.optimizeProfilePhoto(file.path);
     const user = await this.authService.updateUserPhoto(req.user.userId, avatarPath);
 
+    const flowers = await this.authService.getCurrentPeriodFlowers(user.id);
     return {
       data: {
         id: user.id,
         email: user.email,
         identification: user.identification,
         name: user.name,
-        flowers: user.flowers,
-        flores: user.flowers,
+        flowers,
+        flores: flowers,
         role: user.role,
         avatar: user.avatar,
       },

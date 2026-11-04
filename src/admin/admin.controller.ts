@@ -53,6 +53,11 @@ export class AdminController {
     };
   }
 
+  @Get('attendance-periods')
+  async getAttendancePeriods() {
+    return { data: await this.adminService.getAttendancePeriods() };
+  }
+
   @Get('sessions/:sessionId/qr')
   async getSessionQR(@Param('sessionId') sessionId: string) {
     const data = await this.adminService.getSessionQR(sessionId);
