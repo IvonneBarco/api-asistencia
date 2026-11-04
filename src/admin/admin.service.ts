@@ -14,6 +14,7 @@ import { AuthService } from '../auth/auth.service';
 import * as crypto from 'crypto';
 import { ImageService } from '../services/image.service';
 import { SaintLoan, SaintName } from '../entities/saint-loan.entity';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
 
 @Injectable()
 export class AdminService {
@@ -26,6 +27,8 @@ export class AdminService {
     private attendanceRepository: Repository<Attendance>,
     @InjectRepository(SaintLoan)
     private saintLoanRepository: Repository<SaintLoan>,
+    @InjectRepository(AttendancePeriod)
+    private periodRepository: Repository<AttendancePeriod>,
     private qrService: QrService,
     private authService: AuthService,
     private dataSource: DataSource,
@@ -138,6 +141,10 @@ export class AdminService {
    * Crea una nueva sesión y genera su QR
    */
   async createSession(dto: CreateSessionDto) {
+    const period = await this.periodRepository.findOne({ where: { id: dto.periodId } });
+    if (!period) {
+      throw new NotFoundException('Período no encontrado');
+    }
     // Generar sessionId único
     const sessionId = `SESSION-${new Date().toISOString().split('T')[0]}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 
@@ -151,6 +158,7 @@ export class AdminService {
       endsAt: new Date(dto.endsAt),
       isActive: true,
       sessionPin,
+      period,
     });
 
     await this.sessionRepository.save(session);
@@ -166,6 +174,7 @@ export class AdminService {
       startsAt: session.startsAt,
       endsAt: session.endsAt,
       isActive: session.isActive,
+      period: { id: period.id, name: period.name },
       qrCode, // base64 PNG
     };
   }
@@ -175,6 +184,7 @@ export class AdminService {
    */
   async getAllSessions() {
     const sessions = await this.sessionRepository.find({
+      relations: ['period'],
       order: {
         createdAt: 'DESC',
       },
@@ -189,7 +199,12 @@ export class AdminService {
       isActive: session.isActive,
       createdAt: session.createdAt,
       sessionPin: session.sessionPin,
+      period: session.period ? { id: session.period.id, name: session.period.name } : undefined,
     }));
+  }
+
+  async getAttendancePeriods() {
+    return this.periodRepository.find({ order: { startsAt: 'DESC' } });
   }
 
   /**
@@ -546,11 +561,15 @@ export class AdminService {
       );
     }
 
+    const activePeriod = await this.periodRepository.findOne({
+      where: { isActive: true },
+    });
+
     const results = {
       registered: [],
       alreadyRegistered: [],
       flowersAdded: 0,
-      totalFlowers: user.flowers,
+      totalFlowers: 0,
     };
 
     // Registrar asistencias dentro de una transacción
@@ -607,9 +626,17 @@ export class AdminService {
       // Actualizar flores del usuario
       if (results.flowersAdded > 0) {
         await manager.save(user);
-        results.totalFlowers = user.flowers;
       }
     });
+
+    results.totalFlowers = activePeriod
+      ? await this.attendanceRepository
+          .createQueryBuilder('attendance')
+          .innerJoin('attendance.session', 'session')
+          .where('attendance.user_id = :userId', { userId: user.id })
+          .andWhere('session.period_id = :periodId', { periodId: activePeriod.id })
+          .getCount()
+      : 0;
 
     return {
       message: 'Proceso de registro completado',

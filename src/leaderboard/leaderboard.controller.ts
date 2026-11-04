@@ -15,10 +15,12 @@ export class LeaderboardController {
     @Request() req,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('periodId') periodId?: string,
   ) {
     const data = await this.leaderboardService.getLeaderboard(req.user.userId, {
       from,
       to,
+      periodId,
     });
 
     return {
@@ -33,11 +35,13 @@ export class LeaderboardController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('groupId') groupId?: string,
+    @Query('periodId') periodId?: string,
   ) {
     const data = await this.leaderboardService.getLeaderboard(undefined, {
       from,
       to,
       groupId,
+      periodId,
     });
 
     return { data };

@@ -5,6 +5,9 @@ import { User, UserRole } from '../entities/user.entity';
 import { Session } from '../entities/session.entity';
 import { Attendance } from '../entities/attendance.entity';
 import { Group } from '../entities/group.entity';
+import { AttendancePeriod } from '../entities/attendance-period.entity';
+import { GroupAssignmentAudit } from '../entities/group-assignment-audit.entity';
+import { SaintLoan } from '../entities/saint-loan.entity';
 
 config();
 
@@ -15,7 +18,15 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: [User, Session, Attendance, Group],
+  entities: [
+    User,
+    Session,
+    Attendance,
+    AttendancePeriod,
+    Group,
+    GroupAssignmentAudit,
+    SaintLoan,
+  ],
   synchronize: false,
 });
 
@@ -27,6 +38,7 @@ async function seed() {
     const userRepository = AppDataSource.getRepository(User);
     const sessionRepository = AppDataSource.getRepository(Session);
     const groupRepository = AppDataSource.getRepository(Group);
+    const periodRepository = AppDataSource.getRepository(AttendancePeriod);
 
     // Crear grupos predeterminados
     const groupNames = ['Grupo 1', 'Grupo 2', 'Grupo 3'];
@@ -112,12 +124,18 @@ async function seed() {
     }
 
     // Crear sesión de prueba
+    const period = await periodRepository.findOne({ where: { isActive: true } });
+    if (!period) {
+      throw new Error('No existe un período activo para crear la sesión de prueba');
+    }
+
     const sessionData = {
       sessionId: 'SESSION-2026-01-31-TEST123',
       name: 'Encuentro Semanal - Prueba',
       startsAt: new Date('2026-01-31T19:00:00Z'),
       endsAt: new Date('2026-01-31T21:00:00Z'),
       isActive: true,
+      period,
     };
 
     const existingSession = await sessionRepository.findOne({

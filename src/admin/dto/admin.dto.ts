@@ -20,6 +20,9 @@ export class CreateSessionDto {
 
   @IsDateString({}, { message: 'Fecha de fin inválida' })
   endsAt: string;
+
+  @IsUUID()
+  periodId: string;
 }
 
 export class SyncUsersDto {

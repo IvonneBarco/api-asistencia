@@ -121,6 +121,13 @@ conservarán las nuevas cargas realizadas después de configurar el volumen.
 ### Leaderboard
 
 - `GET /api/leaderboard` - Obtener jardín de flores (ranking)
+- `GET /api/admin/attendance-periods` - Listar períodos de asistencia disponibles
+
+Las sesiones pertenecen a un período de asistencia. La migración `AddAttendancePeriods`
+crea los períodos `2025-2026` y `2026-2027`, asigna las sesiones existentes al primero
+y deja el segundo como activo. El ranking usa el período activo por defecto; también
+acepta `periodId` para consultar un período histórico. Al crear una sesión se debe
+enviar `periodId`.
 
 ### Admin (solo admin)
 
