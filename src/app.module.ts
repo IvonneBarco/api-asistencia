@@ -30,7 +30,9 @@ import { AttendancePeriod } from './entities/attendance-period.entity';
       ? { rejectUnauthorized: false }
       : false,
     entities: [User, Session, Attendance, AttendancePeriod, Group, GroupAssignmentAudit, SaintLoan],
-    synchronize: configService.get('NODE_ENV') === 'development',
+    // El esquema se mantiene mediante migraciones; synchronize puede intentar
+    // agregar columnas NOT NULL antes de ejecutar la migración de datos.
+    synchronize: configService.get('DB_SYNCHRONIZE') === 'true',
     logging: configService.get('NODE_ENV') === 'development',
   }),
   inject: [ConfigService],

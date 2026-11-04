@@ -17,7 +17,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { unlinkSync } from 'fs';
 import { AdminService } from './admin.service';
-import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto, CreateSaintLoanDto } from './dto/admin.dto';
+import { CreateSessionDto, SyncUsersDto, AssignGroupDto, RemoveFromGroupDto, RegisterAttendanceDto, CreateSaintLoanDto, UpdateUserPersonalDataDto } from './dto/admin.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -117,6 +117,14 @@ export class AdminController {
     return {
       data,
     };
+  }
+
+  @Put('users/:userId/personal-data')
+  async updateUserPersonalData(
+    @Param('userId') userId: string,
+    @Body() dto: UpdateUserPersonalDataDto,
+  ) {
+    return { data: await this.adminService.updateUserPersonalData(userId, dto) };
   }
 
   @Post('users/:userId/photo')

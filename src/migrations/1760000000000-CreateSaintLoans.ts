@@ -4,12 +4,46 @@ export class CreateSaintLoans1760000000000 implements MigrationInterface {
   name = 'CreateSaintLoans1760000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE TYPE "public"."saint_loans_saint_enum" AS ENUM('Rosa Mística', 'Medalla Milagrosa', 'Sagrado Corazón')`);
-    await queryRunner.query(`CREATE TABLE "saint_loans" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "session_id" uuid NOT NULL, "user_id" uuid NOT NULL, "saint" "public"."saint_loans_saint_enum" NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_saint_loans_id" PRIMARY KEY ("id"))`);
-    await queryRunner.query(`ALTER TABLE "saint_loans" ADD CONSTRAINT "FK_saint_loans_session" FOREIGN KEY ("session_id") REFERENCES "sessions"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-    await queryRunner.query(`ALTER TABLE "saint_loans" ADD CONSTRAINT "FK_saint_loans_user" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE NO ACTION`);
-    await queryRunner.query(`ALTER TABLE "saint_loans" ADD CONSTRAINT "UQ_saint_loans_session_saint" UNIQUE ("session_id", "saint")`);
-    await queryRunner.query(`ALTER TABLE "saint_loans" ADD CONSTRAINT "UQ_saint_loans_session_user" UNIQUE ("session_id", "user_id")`);
+    await queryRunner.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'saint_loans_saint_enum') THEN
+          CREATE TYPE "public"."saint_loans_saint_enum"
+            AS ENUM('Rosa Mística', 'Medalla Milagrosa', 'Sagrado Corazón');
+        END IF;
+      END $$;
+    `);
+    await queryRunner.query(`
+      CREATE TABLE IF NOT EXISTS "saint_loans" (
+        "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+        "session_id" uuid NOT NULL,
+        "user_id" uuid NOT NULL,
+        "saint" "public"."saint_loans_saint_enum" NOT NULL,
+        "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+        CONSTRAINT "PK_saint_loans_id" PRIMARY KEY ("id")
+      )
+    `);
+    await queryRunner.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_saint_loans_session') THEN
+          ALTER TABLE "saint_loans" ADD CONSTRAINT "FK_saint_loans_session"
+            FOREIGN KEY ("session_id") REFERENCES "sessions"("id")
+            ON DELETE CASCADE ON UPDATE NO ACTION;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_saint_loans_user') THEN
+          ALTER TABLE "saint_loans" ADD CONSTRAINT "FK_saint_loans_user"
+            FOREIGN KEY ("user_id") REFERENCES "users"("id")
+            ON DELETE RESTRICT ON UPDATE NO ACTION;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'UQ_saint_loans_session_saint') THEN
+          ALTER TABLE "saint_loans" ADD CONSTRAINT "UQ_saint_loans_session_saint"
+            UNIQUE ("session_id", "saint");
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'UQ_saint_loans_session_user') THEN
+          ALTER TABLE "saint_loans" ADD CONSTRAINT "UQ_saint_loans_session_user"
+            UNIQUE ("session_id", "user_id");
+        END IF;
+      END $$;
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

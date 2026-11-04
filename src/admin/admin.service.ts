@@ -15,6 +15,7 @@ import * as crypto from 'crypto';
 import { ImageService } from '../services/image.service';
 import { SaintLoan, SaintName } from '../entities/saint-loan.entity';
 import { AttendancePeriod } from '../entities/attendance-period.entity';
+import { UpdateUserPersonalDataDto } from './dto/admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -334,6 +335,16 @@ export class AdminService {
     await this.userRepository.save(user);
     this.imageService.removeStoredPhoto(previousAvatar);
 
+    return this.serializeUser(user);
+  }
+
+  async updateUserPersonalData(userId: string, dto: UpdateUserPersonalDataDto) {
+    const user = await this.userRepository.findOne({ where: { id: userId }, relations: ['group'] });
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    Object.assign(user, dto);
+    await this.userRepository.save(user);
     return this.serializeUser(user);
   }
 
